@@ -323,10 +323,6 @@
   .language-grid{ display:flex; flex-wrap:wrap; gap:10px 20px; }
   .language-option{ display:flex; align-items:center; gap:8px; font-size:13.5px; cursor:pointer; }
 
-  .sarvam-waiting{ display:flex; align-items:center; gap:8px; font-size:12.5px; color: var(--text-faint); margin:16px 0; }
-  .sarvam-waiting-dot{ width:6px; height:6px; border-radius:50%; background: var(--text-faint); animation: pulseDot 1.4s ease-in-out infinite; }
-  @keyframes pulseDot{ 0%,100%{ opacity:.3; } 50%{ opacity:1; } }
-
   .wizard-complete{ text-align:center; padding: 60px 0; }
   .wizard-complete-check{ font-size:26px; margin-bottom:14px; }
   .wizard-complete-name{ font-size:16px; font-weight:700; margin-bottom:6px; }
@@ -667,6 +663,7 @@ const leads = [
 const LEAD_FIELDS = [
   "Lead Name", "Email ID", "Created On", "Last Notable Activity", "Lead Source", "Lead Owner", "Lead Stage",
   "Days Since Last Activity", "Course Track", "Preferred Language", "City", "Last Test Score", "Lead Memory",
+  "Phone Number", "Activity in Last 30 Days",
 ];
 const ACTIVITY_OPTIONS = ["Callback Scheduled", "Interested — Follow Up", "Requested Info Pack"];
 
@@ -1307,9 +1304,35 @@ document.getElementById('saveAgentBtn').addEventListener('click', () => {
 });
 
 // ---------- Guided create-agent wizard ----------
+function createDefaultInputVariables() {
+  return [
+    { id: ++varRowIdCounter, name: 'lead_name', mapsTo: 'Lead Name' },
+    { id: ++varRowIdCounter, name: 'phone_number', mapsTo: 'Phone Number' },
+    { id: ++varRowIdCounter, name: 'activity_last_30_days', mapsTo: 'Activity in Last 30 Days' },
+    { id: ++varRowIdCounter, name: 'current_lead_memory', mapsTo: 'Lead Memory' },
+    { id: ++varRowIdCounter, name: 'lead_stage', mapsTo: 'Lead Stage' },
+    { id: ++varRowIdCounter, name: 'lead_source', mapsTo: 'Lead Source' },
+  ];
+}
+
+function createDefaultOutputVariables() {
+  return [
+    { id: ++varRowIdCounter, name: 'RCB_requested', type: 'boolean', description: 'Whether the lead asked for a callback' },
+    { id: ++varRowIdCounter, name: 'call_connected', type: 'boolean', description: 'Whether the call connected successfully' },
+    { id: ++varRowIdCounter, name: 'interest_score', type: 'percentage', description: 'Predicted interest level, 0–100' },
+    { id: ++varRowIdCounter, name: 'sentiment_score', type: 'percentage', description: 'Overall sentiment of the conversation, 0–100' },
+    { id: ++varRowIdCounter, name: 'objection_reason', type: 'text', description: 'What the lead said if they declined' },
+    { id: ++varRowIdCounter, name: 'next_action', type: 'text', description: 'Recommended next step suggested by the AI' },
+  ];
+}
+
 function startAgentWizard(ctx) {
   wizardReturnContext = ctx || null;
-  wizardAgent = { name: '', purposeTag: '', languages: [], sarvamConfirmed: false, inputVariables: [], outputVariables: [] };
+  wizardAgent = {
+    name: '', purposeTag: '', languages: [],
+    inputVariables: createDefaultInputVariables(),
+    outputVariables: createDefaultOutputVariables(),
+  };
   wizardStep = 1;
 
   document.getElementById('agentsListView').style.display = 'none';
@@ -1450,26 +1473,6 @@ function renderWizardStep() {
 
   else if (wizardStep === 3) {
     body.innerHTML = `
-      <div class="wizard-step-title">Configure prompt & voice</div>
-      <div class="wizard-step-desc">Set up this agent's conversation prompt and voice on Sarvam before continuing.</div>
-      <a class="btn btn-primary" href="https://www.sarvam.ai" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">Open Sarvam ↗</a>
-      <div class="sarvam-waiting" id="sarvamWaiting">
-        <span class="sarvam-waiting-dot"></span> Waiting for Sarvam configuration…
-      </div>
-      <div class="wizard-actions">
-        <button class="wizard-back" id="wizBack">Back</button>
-        <button class="btn btn-primary" id="wizConfirm">I've configured it</button>
-      </div>
-    `;
-    document.getElementById('wizBack').addEventListener('click', () => { wizardStep = 2; renderWizardStep(); });
-    document.getElementById('wizConfirm').addEventListener('click', () => {
-      wizardAgent.sarvamConfirmed = true;
-      wizardStep = 4; renderWizardStep();
-    });
-  }
-
-  else if (wizardStep === 4) {
-    body.innerHTML = `
       <div class="wizard-step-title">Input variables</div>
       <div class="wizard-step-desc">What gets sent to the agent before the call.</div>
       <div id="wizInputVarRows"></div>
@@ -1484,20 +1487,20 @@ function renderWizardStep() {
       wizardAgent.inputVariables.push({ id: ++varRowIdCounter, name: '', mapsTo: LEAD_FIELDS[0] });
       renderWizardInputRows();
     });
-    document.getElementById('wizBack').addEventListener('click', () => { wizardStep = 3; renderWizardStep(); });
-    document.getElementById('wizNext').addEventListener('click', () => { wizardStep = 5; renderWizardStep(); });
+    document.getElementById('wizBack').addEventListener('click', () => { wizardStep = 2; renderWizardStep(); });
+    document.getElementById('wizNext').addEventListener('click', () => { wizardStep = 4; renderWizardStep(); });
   }
 
-  else if (wizardStep === 5) {
+  else if (wizardStep === 4) {
     body.innerHTML = `
       <div class="wizard-step-title">Output variables</div>
       <div class="wizard-step-desc">What the agent (or post-call analysis) returns after the call. At least one is required before this agent can be used in a workflow.</div>
       <div id="wizOutputVarRows"></div>
       <button class="btn" id="wizAddOutputVar" style="margin-top:12px;">+ Add output variable</button>
-      <div class="output-warning" id="wizSaveError" style="display:none; margin-top:14px;"></div>
+      <div class="output-warning" id="wizStepError" style="display:none; margin-top:14px;">At least one output variable is required before this agent can be used.</div>
       <div class="wizard-actions">
         <button class="wizard-back" id="wizBack">Back</button>
-        <button class="btn btn-primary" id="wizFinish">Finish</button>
+        <button class="btn btn-primary" id="wizNext">Next</button>
       </div>
     `;
     renderWizardOutputRows();
@@ -1505,17 +1508,43 @@ function renderWizardStep() {
       wizardAgent.outputVariables.push({ id: ++varRowIdCounter, name: '', type: 'boolean', description: '' });
       renderWizardOutputRows();
     });
+    document.getElementById('wizBack').addEventListener('click', () => { wizardStep = 3; renderWizardStep(); });
+    document.getElementById('wizNext').addEventListener('click', () => {
+      if (!wizardAgent.outputVariables.some(v => v.name.trim())) {
+        document.getElementById('wizStepError').style.display = 'block';
+        return;
+      }
+      wizardStep = 5; renderWizardStep();
+    });
+  }
+
+  else if (wizardStep === 5) {
+    const inputNames = wizardAgent.inputVariables.map(v => v.name.trim()).filter(Boolean);
+    const outputNames = wizardAgent.outputVariables.map(v => v.name.trim()).filter(Boolean);
+    body.innerHTML = `
+      <div class="wizard-step-title">Configure prompt & voice</div>
+      <div class="wizard-step-desc">Set up this agent's conversation prompt and voice on Sarvam.</div>
+      <a class="btn btn-primary" href="https://www.sarvam.ai" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">Open Sarvam ↗</a>
+      <div class="static-note" style="margin-top:18px; line-height:1.6;">
+        Use these exact variable names in your Sarvam prompt so the call data maps correctly:<br>
+        <b>Inputs:</b> ${inputNames.join(', ') || '—'}<br>
+        <b>Outputs:</b> ${outputNames.join(', ') || '—'}
+      </div>
+      <div class="wizard-actions">
+        <button class="wizard-back" id="wizBack">Back</button>
+        <button class="btn btn-primary" id="wizFinish">Finish</button>
+      </div>
+    `;
     document.getElementById('wizBack').addEventListener('click', () => { wizardStep = 4; renderWizardStep(); });
     document.getElementById('wizFinish').addEventListener('click', finishWizard);
   }
 }
 
 function finishWizard() {
-  const errorEl = document.getElementById('wizSaveError');
   const cleanOutputs = wizardAgent.outputVariables.filter(v => v.name.trim());
   if (cleanOutputs.length === 0) {
-    errorEl.textContent = 'At least one output variable is required before this agent can be used.';
-    errorEl.style.display = 'block';
+    wizardStep = 4; renderWizardStep();
+    document.getElementById('wizStepError').style.display = 'block';
     return;
   }
 
