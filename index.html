@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM — AI Calling</title>
+<style>
+  :root{
+    --bg: #ffffff;
+    --bg-alt: #fafafa;
+    --text: #111111;
+    --text-dim: #6b6b6b;
+    --text-faint: #9a9a9a;
+    --line: #e6e6e6;
+    --line-strong: #d4d4d4;
+    --accent: #111111;
+    --accent-contrast: #ffffff;
+    --danger: #b3441e;
+    --overlay: rgba(0,0,0,0.35);
+    --panel-bg: #ffffff;
+    --pill-bg: #f2f2f2;
+  }
+  [data-theme="dark"]{
+    --bg: #121212;
+    --bg-alt: #161616;
+    --text: #f2f2f2;
+    --text-dim: #a3a3a3;
+    --text-faint: #707070;
+    --line: #2a2a2a;
+    --line-strong: #3a3a3a;
+    --accent: #f2f2f2;
+    --accent-contrast: #121212;
+    --danger: #e08a5f;
+    --overlay: rgba(0,0,0,0.55);
+    --panel-bg: #161616;
+    --pill-bg: #1f1f1f;
+  }
+  * { box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  a { color: inherit; }
+
+  /* ---------- Shell ---------- */
+  .shell{ display:flex; min-height:100vh; }
+  .sidebar{
+    width: 220px;
+    flex-shrink:0;
+    border-right: 1px solid var(--line);
+    padding: 28px 24px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .brand{ font-size:15px; font-weight:600; letter-spacing:-0.01em; margin-bottom: 40px; }
+  .nav-list{ display:flex; flex-direction:column; gap: 4px; }
+  .nav-item{
+    padding: 8px 0;
+    font-size: 13.5px;
+    color: var(--text-dim);
+    cursor:pointer;
+    border: none;
+    background: none;
+    text-align:left;
+    font-family: inherit;
+  }
+  .nav-item.active{ color: var(--text); font-weight:600; }
+  .theme-toggle{
+    font-size: 12.5px;
+    color: var(--text-dim);
+    cursor: pointer;
+    border: 1px solid var(--line-strong);
+    background: none;
+    padding: 7px 12px;
+    border-radius: 3px;
+    font-family: inherit;
+    align-self:flex-start;
+  }
+  .theme-toggle:hover{ border-color: var(--text-dim); color: var(--text); }
+
+  .main{ flex:1; min-width:0; position:relative; }
+  .page{ display:none; padding: 32px 40px 80px; }
+  .page.active{ display:block; }
+
+  h1{ font-size: 19px; font-weight:600; letter-spacing:-0.01em; margin: 0 0 4px; }
+  .subhead{ color: var(--text-dim); font-size: 13px; margin: 0 0 28px; }
+
+  /* ---------- Filters ---------- */
+  .filters{ display:flex; align-items:flex-end; gap: 22px; margin-bottom: 20px; flex-wrap:wrap; }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ font-size:11.5px; text-transform:none; letter-spacing:0; color: var(--text-faint); font-weight:500; }
+  select, input[type="text"], input[type="number"], input[type="datetime-local"], input[type="time"], textarea{
+    font-family: inherit;
+    font-size: 13.5px;
+    color: var(--text);
+    background: var(--bg);
+    border: none;
+    border-bottom: 1px solid var(--line-strong);
+    padding: 4px 2px 8px;
+    min-width: 150px;
+  }
+  select:focus, input:focus, textarea:focus{ outline:none; border-bottom-color: var(--text); }
+  textarea{ min-width: 100%; resize: vertical; }
+
+  /* Standalone selects: more presence than a bare browser control */
+  select{
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    padding: 8px 26px 10px 4px;
+    border-radius: 3px 3px 0 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%239a9a9a' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease;
+  }
+  select:hover{ background-color: var(--bg-alt); }
+  select:focus{ background-color: var(--bg-alt); border-bottom: 1.5px solid var(--text); }
+  select:disabled{ opacity: .5; cursor: not-allowed; background-color: transparent; }
+
+  .toolbar{ display:flex; align-items:center; justify-content:space-between; padding: 14px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin-bottom: 0; }
+  .toolbar-left{ font-size: 13px; color: var(--text-dim); }
+  .toolbar-right{ display:flex; gap: 10px; }
+
+  .btn{
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid var(--line-strong);
+    background: var(--bg);
+    color: var(--text);
+  }
+  .btn:hover{ border-color: var(--text-dim); }
+  .btn-primary{
+    background: var(--accent);
+    color: var(--accent-contrast);
+    border-color: var(--accent);
+  }
+  .btn-primary:hover{ opacity:.85; }
+  .btn-primary:disabled{
+    background: var(--pill-bg);
+    color: var(--text-faint);
+    border-color: var(--line);
+    cursor: not-allowed;
+    opacity: 1;
+  }
+  .btn[disabled]{ cursor:not-allowed; opacity:.5; }
+
+  /* ---------- Table ---------- */
+  table{ width:100%; border-collapse: collapse; margin-top: 0; }
+  thead th{
+    text-align:left;
+    font-size: 11.5px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--text-faint);
+    font-weight:500;
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  tbody td{ padding: 13px 10px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+  tbody tr:hover{ background: var(--bg-alt); }
+  .stage-tag{ font-size:11.5px; color: var(--text-dim); }
+  .lead-name{ font-weight:500; }
+  .email{ color: var(--text-dim); }
+
+  /* ---------- Overlay + Panel ---------- */
+  .overlay{
+    position: fixed; inset:0; background: var(--overlay);
+    opacity:0; pointer-events:none; transition: opacity .25s ease;
+    z-index: 40;
+  }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+
+  .panel{
+    position: fixed; top:0; right:0; height:100vh; width: 460px; max-width: 92vw;
+    background: var(--panel-bg);
+    border-left: 1px solid var(--line);
+    transform: translateX(100%);
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+    z-index: 50;
+    display:flex; flex-direction:column;
+  }
+  .panel.show{ transform: translateX(0); }
+  .panel-header{ padding: 26px 32px 18px; border-bottom: 1px solid var(--line); flex-shrink:0; }
+  .panel-close{ float:right; background:none; border:none; color: var(--text-dim); font-size:13px; cursor:pointer; font-family:inherit; }
+  .panel-count{ font-size:17px; font-weight:600; letter-spacing:-.01em; }
+  .panel-body{ padding: 8px 32px 24px; overflow-y:auto; flex:1; }
+  .panel-footer{ padding: 18px 32px 24px; border-top:1px solid var(--line); flex-shrink:0; }
+
+  .section{ padding: 32px 0; border-bottom: 1px solid var(--line); transition: opacity .25s ease; }
+  .section:last-child{ border-bottom:none; }
+  .section:not(.is-active){ opacity: .58; }
+  .section-num{ font-size:11px; color: var(--text-faint); letter-spacing:.02em; margin-bottom:6px; }
+  .step-num{ font-size:11px; font-weight:500; color: var(--text-faint); margin-right:7px; letter-spacing:.02em; }
+  .section-title{ font-size: 16px; font-weight:700; letter-spacing:-.01em; margin-bottom: 14px; transition: font-size .2s ease, color .2s ease, font-weight .2s ease; }
+  .section:not(.is-active) .section-title{ font-size: 13.5px; font-weight:600; color: var(--text-dim); }
+  .static-note{ font-size: 12px; color: var(--text-faint); line-height:1.5; }
+  .helper-note{ font-size: 11px; color: var(--text-faint); margin-top: 6px; line-height:1.4; }
+  .stack{ display:flex; flex-direction:column; gap: 14px; }
+  .row2{ display:flex; gap: 16px; }
+  .row2 .field{ flex:1; }
+
+  .alert{
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--danger);
+    padding: 8px 0;
+    border-top: 1px solid var(--line);
+    display:none;
+  }
+  .alert.show{ display:block; }
+
+  .estimate{ font-size: 12.5px; color: var(--text-dim); margin-top: 10px; }
+  .estimate b{ color: var(--text); font-weight:600; }
+
+  /* ---------- Output mapping ---------- */
+  .fixed-step-text{ font-size: 13.5px; margin-bottom: 18px; }
+  .remove-link{
+    font-size: 11.5px; color: var(--text-faint); background:none; border:none;
+    cursor:pointer; font-family: inherit; padding:0; flex-shrink:0;
+  }
+  .remove-link:hover{ color: var(--danger); }
+
+  .output-var-group{ padding: 16px 0; border-top: 1px solid var(--line); }
+  .output-var-group:first-child{ border-top:none; padding-top:0; }
+  .output-var-head{ display:flex; align-items:center; justify-content:space-between; }
+  .output-var-name{ font-size: 13.5px; font-weight:600; }
+  .output-var-type{ font-weight:400; color: var(--text-faint); font-size:12px; }
+  .output-var-desc{ font-size: 12px; color: var(--text-dim); margin: 2px 0 12px; }
+
+  .output-row{ padding: 7px 0; }
+  .output-sentence{
+    display:flex; flex-wrap:wrap; align-items:center; gap: 6px;
+    font-size: 13.5px; line-height: 1.8; color: var(--text);
+  }
+  .var-ref{ font-weight:600; }
+  .output-row-remove{ font-size: 11px; color: var(--text-faint); background:none; border:none; cursor:pointer; font-family:inherit; padding:0; margin-left:2px; }
+  .output-row-remove:hover{ color: var(--danger); }
+
+  .inline-select-wrap{ position:relative; display:inline-flex; align-items:center; }
+  .inline-select-wrap::after{
+    content:''; position:absolute; right:2px; top:50%; transform:translateY(-50%);
+    width:8px; height:5px; pointer-events:none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%239a9a9a' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat; background-size:contain;
+  }
+  .inline-select{
+    appearance:none; -webkit-appearance:none; -moz-appearance:none;
+    border:none; border-bottom:1px solid transparent;
+    background:transparent; font:inherit; font-size:13.5px; color:var(--text);
+    padding:0 15px 2px 2px; cursor:pointer; max-width:220px;
+    transition: border-color .15s ease;
+  }
+  .inline-select:hover, .inline-select:focus{ border-bottom-color: var(--text-dim); }
+  .inline-select:focus{ outline:none; border-bottom-color: var(--text); }
+  .inline-input{
+    border:none; border-bottom:1px solid var(--line-strong); background:transparent;
+    font:inherit; font-size:13.5px; color:var(--text); padding:0 2px 2px; min-width:0;
+  }
+  .inline-input:focus{ outline:none; border-bottom-color: var(--text); }
+  .inline-input-num{ width:44px; text-align:center; }
+  .inline-input-text{ width:120px; }
+  .output-suffix{ font-size:12.5px; color: var(--text-faint); white-space:nowrap; }
+
+  .output-note{ font-size: 11px; color: var(--text-faint); margin-top: 10px; }
+  .output-warning{ font-size: 11.5px; color: var(--danger); margin-top: 8px; display:none; }
+  .output-warning.show{ display:block; }
+  .output-add-row{ margin-top: 8px; }
+
+  /* ---------- Managed Agents ---------- */
+  .var-row{ display:flex; align-items:center; gap:10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .var-row input, .var-row select{ flex:1; min-width:0; width:auto; }
+
+  .toast{
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--accent); color: var(--accent-contrast);
+    padding: 12px 22px; border-radius: 4px; font-size: 13px;
+    opacity:0; pointer-events:none; transition: all .25s ease;
+    z-index: 60;
+  }
+  .toast.show{ opacity:1; transform: translateX(-50%) translateY(0); }
+
+  /* ---------- History page ---------- */
+  .run-row{ cursor:pointer; }
+  .status-dot{ display:inline-block; font-size:12px; }
+  .status-completed{ color: var(--text-dim); }
+  .status-progress{ color: var(--text); font-weight:500; }
+
+  .detail-back{ background:none; border:none; color: var(--text-dim); font-size:13px; cursor:pointer; padding:0; margin-bottom:18px; font-family:inherit; }
+  .detail-back:hover{ color: var(--text); }
+
+  .flag-list{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+  .flag-item{ font-size:13px; color: var(--text-dim); padding: 10px 0; border-bottom:1px solid var(--line); }
+  .flag-item span{ color: var(--text-faint); font-size:11.5px; display:block; margin-bottom:3px; }
+
+  .ask-ai{
+    position: sticky; bottom:0; background: var(--bg);
+    border-top: 1px solid var(--line);
+    padding: 16px 0; margin-top: 30px;
+    display:flex; gap: 10px;
+  }
+  .ask-ai input{ flex:1; min-width:0; }
+  .ask-answer{
+    margin-top: 14px; font-size: 13px; color: var(--text-dim);
+    padding: 14px 0 0; border-top: 1px dashed var(--line);
+    display:none;
+  }
+  .ask-answer.show{ display:block; }
+  .ask-answer b{ color: var(--text); }
+
+  ::placeholder{ color: var(--text-faint); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="sidebar">
+    <div>
+      <div class="brand">Northwind CRM</div>
+      <div class="nav-list">
+        <button class="nav-item active" data-page="leads">Leads</button>
+        <button class="nav-item" data-page="history">AI Calling History</button>
+        <button class="nav-item" data-page="agents">Managed Agents</button>
+      </div>
+    </div>
+    <button class="theme-toggle" id="themeToggle">Dark mode</button>
+  </div>
+
+  <div class="main">
+
+    <!-- ============ SCREEN 1: LEAD LIST ============ -->
+    <div class="page active" id="page-leads">
+      <h1>Leads</h1>
+      <p class="subhead">1,842 total leads</p>
+
+      <div class="filters">
+        <div class="field">
+          <label>Lead Stage</label>
+          <select id="stageFilter">
+            <option value="all">All stages</option>
+            <option value="Dormant">Dormant</option>
+            <option value="New">New</option>
+            <option value="Qualified">Qualified</option>
+            <option value="Lost">Lost</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Lead Source</label>
+          <select>
+            <option>All sources</option>
+            <option>Website</option>
+            <option>Referral</option>
+            <option>Paid Ads</option>
+            <option>Event</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Lead Owner</label>
+          <select>
+            <option>All owners</option>
+            <option>Priya Nair</option>
+            <option>Arjun Mehta</option>
+            <option>Sana Iyer</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Date Range</label>
+          <select>
+            <option>All time</option>
+            <option>Last 7 days</option>
+            <option>Last 30 days</option>
+            <option>Last quarter</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-left" id="filterSummary">1,842 leads matching current filter</div>
+        <div class="toolbar-right">
+          <button class="btn">Actions</button>
+          <button class="btn btn-primary" id="aiCallingBtn" disabled>AI Calling</button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32px"><input type="checkbox" id="selectAllLeads"></th>
+            <th>Lead Name</th>
+            <th>Created On</th>
+            <th>Email ID</th>
+            <th>Last Notable Activity</th>
+            <th>Stage</th>
+          </tr>
+        </thead>
+        <tbody id="leadsTbody"></tbody>
+      </table>
+    </div>
+
+    <!-- ============ SCREEN 3: AI CALLING HISTORY ============ -->
+    <div class="page" id="page-history">
+      <div id="historyListView">
+        <h1>AI Calling History</h1>
+        <p class="subhead">Past workflow runs</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Workflow Name</th>
+              <th>Date Run</th>
+              <th>Total Leads</th>
+              <th>Outcome 1</th>
+              <th>Outcome 0</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="historyTbody"></tbody>
+        </table>
+
+        <div class="ask-ai">
+          <input type="text" id="askAiInput" placeholder="Ask AI about past runs — e.g. how many leads asked about EMI">
+          <button class="btn btn-primary" id="askAiBtn">Send</button>
+        </div>
+        <div class="ask-answer" id="askAiAnswer"></div>
+      </div>
+
+      <div id="historyDetailView" style="display:none;">
+        <button class="detail-back" id="detailBackBtn">← Back to history</button>
+        <h1 id="detailTitle">Workflow run</h1>
+        <p class="subhead" id="detailSubhead"></p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Lead Name</th>
+              <th>Email ID</th>
+              <th>Outcome</th>
+            </tr>
+          </thead>
+          <tbody id="detailTbody"></tbody>
+        </table>
+
+        <div class="section" style="border-bottom:none; padding-bottom:0;">
+          <div class="section-title" style="margin-top:24px;">Questions AI couldn't answer</div>
+          <div class="flag-list" id="detailFlags"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ MANAGED AGENTS ============ -->
+    <div class="page" id="page-agents">
+      <div id="agentsListView">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between;">
+          <div>
+            <h1>Managed Agents</h1>
+            <p class="subhead">AI agents available for calling workflows</p>
+          </div>
+          <button class="btn btn-primary" id="createAgentBtn">+ Create Agent</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Agent Name</th>
+              <th>Input Variables</th>
+              <th>Output Variables</th>
+              <th>Usable in Workflows</th>
+            </tr>
+          </thead>
+          <tbody id="agentsTbody"></tbody>
+        </table>
+      </div>
+
+      <div id="agentDetailView" style="display:none;">
+        <button class="detail-back" id="agentDetailBack">← Back to Managed Agents</button>
+        <div class="field" style="width:100%; max-width:380px; margin-bottom: 28px;">
+          <label>Agent name</label>
+          <input type="text" id="agentNameInput" placeholder="e.g. Aria — Reactivation Specialist">
+        </div>
+
+        <div class="section" style="padding-left:0; padding-right:0;">
+          <div class="section-title">Input variables</div>
+          <div class="static-note" style="margin-bottom:14px;">What gets sent to the agent before the call.</div>
+          <div id="inputVarRows"></div>
+          <button class="btn" id="addInputVarBtn" style="margin-top:12px;">+ Add input variable</button>
+        </div>
+
+        <div class="section" style="padding-left:0; padding-right:0; border-bottom:none;">
+          <div class="section-title">Output variables</div>
+          <div class="static-note" style="margin-bottom:14px;">What the agent (or post-call analysis) returns after the call. At least one is required before this agent can be used in a workflow.</div>
+          <div id="outputVarRows"></div>
+          <button class="btn" id="addOutputVarBtn" style="margin-top:12px;">+ Add output variable</button>
+        </div>
+
+        <div class="output-warning" id="agentSaveError" style="display:none; margin-bottom:12px;"></div>
+        <button class="btn btn-primary" id="saveAgentBtn">Save agent</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ SCREEN 2: WORKFLOW PANEL ============ -->
+<div class="overlay" id="overlay"></div>
+<div class="panel" id="panel">
+  <div class="panel-header">
+    <button class="panel-close" id="panelClose">Close</button>
+    <div class="panel-count" id="panelCount">500 dormant leads found</div>
+  </div>
+
+  <div class="panel-body">
+
+    <div class="section">
+      <div class="section-title"><span class="step-num">1</span>Select AI agent</div>
+      <div class="helper-note" style="margin-top:0; margin-bottom:10px;">Only agents with at least one output variable can be selected — configure these in Managed Agents.</div>
+      <div class="field" style="width:100%;">
+        <select id="agentSelect" style="width:100%;"></select>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="step-num">2</span>What happens next?</div>
+      <div class="static-note" style="margin-bottom:14px;">AI calls the lead — what should happen after the call?</div>
+      <div class="fixed-step-text"><b>AI calls the lead</b></div>
+      <div id="outputMapping"></div>
+      <div class="field" id="addVariableField" style="width:100%; margin-top:10px;">
+        <select id="addVariableSelect" style="width:100%;"></select>
+      </div>
+      <div class="helper-note" id="addVariableNote" style="margin-top:10px; display:none;"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="step-num">3</span>Scheduling</div>
+      <div class="static-note" style="margin-bottom:14px;">When should calling begin</div>
+      <div class="row2">
+        <div class="field">
+          <label>First call</label>
+          <input type="datetime-local" id="firstCall">
+        </div>
+        <div class="field">
+          <label>Batch size</label>
+          <input type="number" id="batchSize" value="100" min="1">
+        </div>
+      </div>
+      <div class="estimate" id="estimateText">Estimated completion: <b>~3.3 hours</b> after start</div>
+      <div class="alert" id="throttleAlert">This batch may run late — consider reducing lead count.</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="step-num">4</span>Abort rules</div>
+      <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; cursor:pointer;">
+        <input type="checkbox" id="abortEnable">
+        Don't call leads outside a set window
+      </label>
+      <div class="row2" style="margin-top:14px;">
+        <div class="field">
+          <label>Don't call after</label>
+          <input type="time" id="abortTime" value="20:00" disabled>
+        </div>
+      </div>
+      <div class="row2" style="margin-top:14px;">
+        <div class="field">
+          <label>Resume on</label>
+          <select id="resumeDay" disabled>
+            <option>Next day</option>
+            <option>Next week Monday</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Resume time</label>
+          <input type="time" id="resumeTime" value="09:00" disabled>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="panel-footer">
+    <button class="btn btn-primary" id="launchBtn" style="width:100%;">Launch workflow</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">Workflow launched — check AI Calling History</div>
+
+<script>
+// ---------- Mock data ----------
+const leads = [
+  { name: "Rohan Kapoor", created: "2026-05-12", email: "rohan.kapoor@vertex.io", activity: "No response to follow-up email", stage: "Dormant" },
+  { name: "Meera Chandra", created: "2026-04-28", email: "meera.chandra@brightpath.com", activity: "Demo scheduled, no-show", stage: "Dormant" },
+  { name: "Aditya Rao", created: "2026-06-02", email: "aditya.rao@northgate.co", activity: "Opened pricing email", stage: "New" },
+  { name: "Kavya Menon", created: "2026-03-15", email: "kavya.menon@lumina.ai", activity: "Call not answered, 3 attempts", stage: "Dormant" },
+  { name: "Vikram Suri", created: "2026-06-20", email: "vikram.suri@orbitworks.com", activity: "Requested proposal", stage: "Qualified" },
+  { name: "Divya Pillai", created: "2026-02-09", email: "divya.pillai@fernwood.in", activity: "Trial expired, no upgrade", stage: "Dormant" },
+  { name: "Karan Malhotra", created: "2026-05-30", email: "karan.malhotra@stackline.io", activity: "Unsubscribed from nurture", stage: "Lost" },
+  { name: "Ishita Bose", created: "2026-04-02", email: "ishita.bose@driftpoint.com", activity: "Last contacted 61 days ago", stage: "Dormant" },
+  { name: "Nikhil Shetty", created: "2026-06-11", email: "nikhil.shetty@corewave.co", activity: "Downloaded whitepaper", stage: "New" },
+  { name: "Ananya Desai", created: "2026-01-22", email: "ananya.desai@haloedge.com", activity: "No pickup on renewal call", stage: "Dormant" },
+  { name: "Farah Qureshi", created: "2026-06-25", email: "farah.qureshi@brightpath.com", activity: "Booked a demo call", stage: "Qualified" },
+  { name: "Manav Chatterjee", created: "2026-05-18", email: "manav.chatterjee@northgate.co", activity: "Asked for pricing breakdown", stage: "Qualified" },
+  { name: "Priyanka Reddy", created: "2026-03-30", email: "priyanka.reddy@vertex.io", activity: "Marked not interested", stage: "Lost" },
+  { name: "Devansh Oberoi", created: "2026-06-08", email: "devansh.oberoi@lumina.ai", activity: "Signed up, dropped after day 1", stage: "Lost" },
+  { name: "Tanvi Krishnan", created: "2026-06-14", email: "tanvi.krishnan@orbitworks.com", activity: "New enquiry via website form", stage: "New" },
+  { name: "Yusuf Ansari", created: "2026-06-19", email: "yusuf.ansari@fernwood.in", activity: "New enquiry via referral", stage: "New" },
+];
+
+const LEAD_FIELDS = [
+  "Lead Name", "Email ID", "Created On", "Last Notable Activity", "Lead Source", "Lead Owner", "Lead Stage",
+  "Days Since Last Activity", "Course Track", "Preferred Language", "City", "Last Test Score", "Lead Memory",
+];
+const ACTIVITY_OPTIONS = ["Callback Scheduled", "Interested — Follow Up", "Requested Info Pack"];
+
+let agents = [
+  {
+    id: 1,
+    name: "Aria — Reactivation Specialist",
+    inputVariables: [
+      { name: "lead_memory", mapsTo: "Lead Memory" },
+      { name: "lead_name", mapsTo: "Lead Name" },
+    ],
+    outputVariables: [
+      { name: "RCB_requested", type: "boolean", description: "Whether the lead asked for a callback" },
+      { name: "objection_reason", type: "text", description: "What the lead said if they declined" },
+    ],
+  },
+  {
+    id: 2,
+    name: "Kabir — Renewal & Retention",
+    inputVariables: [
+      { name: "lead_memory", mapsTo: "Lead Memory" },
+      { name: "lead_name", mapsTo: "Lead Name" },
+      { name: "last_activity", mapsTo: "Last Notable Activity" },
+    ],
+    outputVariables: [
+      { name: "renewal_confidence", type: "percentage", description: "Likelihood the lead renews their plan" },
+    ],
+  },
+  {
+    id: 3,
+    name: "Noor — Warm Callback Agent",
+    inputVariables: [
+      { name: "lead_memory", mapsTo: "Lead Memory" },
+      { name: "lead_name", mapsTo: "Lead Name" },
+    ],
+    outputVariables: [],
+  },
+  {
+    id: 4,
+    name: "Dormant Warmup",
+    inputVariables: [
+      { name: "lead_memory", mapsTo: "Lead Memory" },
+      { name: "lead_name", mapsTo: "Lead Name" },
+      { name: "days_since_activity", mapsTo: "Days Since Last Activity" },
+    ],
+    outputVariables: [
+      { name: "warmup_success", type: "boolean", description: "Whether the lead re-engaged positively" },
+      { name: "interest_score", type: "percentage", description: "Predicted interest in reactivating, 0–100" },
+    ],
+  },
+  {
+    id: 5,
+    name: "Fresh Low-Intent Qualifier",
+    inputVariables: [
+      { name: "lead_memory", mapsTo: "Lead Memory" },
+      { name: "lead_name", mapsTo: "Lead Name" },
+      { name: "lead_source", mapsTo: "Lead Source" },
+    ],
+    outputVariables: [
+      { name: "qualified", type: "boolean", description: "Whether the lead meets minimum qualification criteria" },
+      { name: "objection_reason", type: "text", description: "Reason given for low interest" },
+    ],
+  },
+  {
+    id: 6,
+    name: "TRO Reminder-1",
+    inputVariables: [
+      { name: "lead_memory", mapsTo: "Lead Memory" },
+      { name: "lead_name", mapsTo: "Lead Name" },
+      { name: "course_track", mapsTo: "Course Track" },
+    ],
+    outputVariables: [
+      { name: "reminder_acknowledged", type: "boolean", description: "Whether the lead confirmed they'll attend" },
+    ],
+  },
+  {
+    id: 7,
+    name: "TRO Reminder-2",
+    inputVariables: [
+      { name: "lead_memory", mapsTo: "Lead Memory" },
+      { name: "lead_name", mapsTo: "Lead Name" },
+      { name: "preferred_language", mapsTo: "Preferred Language" },
+    ],
+    outputVariables: [
+      { name: "reschedule_requested", type: "boolean", description: "Whether the lead asked to reschedule" },
+      { name: "interest_score", type: "percentage", description: "Confidence the lead will attend, 0–100" },
+    ],
+  },
+  {
+    id: 8,
+    name: "Missed Callback Recovery",
+    inputVariables: [
+      { name: "lead_memory", mapsTo: "Lead Memory" },
+      { name: "lead_name", mapsTo: "Lead Name" },
+      { name: "last_activity", mapsTo: "Last Notable Activity" },
+    ],
+    outputVariables: [
+      { name: "RCB_requested", type: "boolean", description: "Whether the lead asked for a callback again" },
+      { name: "objection_reason", type: "text", description: "What the lead said when declining the callback" },
+    ],
+  },
+  {
+    id: 9,
+    name: "Payment Follow-up",
+    inputVariables: [
+      { name: "lead_memory", mapsTo: "Lead Memory" },
+      { name: "lead_name", mapsTo: "Lead Name" },
+      { name: "city", mapsTo: "City" },
+    ],
+    outputVariables: [
+      { name: "payment_confirmed", type: "boolean", description: "Whether the lead confirmed payment" },
+      { name: "payment_confidence", type: "percentage", description: "Likelihood of completing payment this week" },
+    ],
+  },
+  {
+    id: 10,
+    name: "Session Reminder",
+    inputVariables: [
+      { name: "lead_memory", mapsTo: "Lead Memory" },
+      { name: "lead_name", mapsTo: "Lead Name" },
+      { name: "last_test_score", mapsTo: "Last Test Score" },
+    ],
+    outputVariables: [
+      { name: "attendance_confirmed", type: "boolean", description: "Whether the lead confirmed attendance" },
+    ],
+  },
+];
+let agentIdCounter = 10;
+
+function getSelectedAgent() {
+  const id = parseInt(document.getElementById('agentSelect').value, 10);
+  return agents.find(a => a.id === id);
+}
+
+let historyRuns = [
+  {
+    name: "Renewal Reactivation — June",
+    date: "2026-06-18",
+    total: 420,
+    outcome1: 96,
+    outcome0: 324,
+    status: "Completed",
+    leads: [
+      { name: "Farhan Ali", email: "farhan.ali@meshgrid.com", outcome: 1 },
+      { name: "Simran Kaur", email: "simran.kaur@vaultline.io", outcome: 0 },
+      { name: "Ritesh Jain", email: "ritesh.jain@corewave.co", outcome: 1 },
+      { name: "Pooja Nambiar", email: "pooja.nambiar@brightpath.com", outcome: 0 },
+    ],
+    flags: [
+      { lead: "Farhan Ali", question: "Can EMI be paid in installments of 3 months instead of 6?" },
+      { lead: "Ritesh Jain", question: "Is there a discount for annual upfront payment?" },
+    ]
+  },
+  {
+    name: "Dormant Winback — May",
+    date: "2026-05-04",
+    total: 310,
+    outcome1: 58,
+    outcome0: 252,
+    status: "Completed",
+    leads: [
+      { name: "Neha Kulkarni", email: "neha.kulkarni@orbitworks.com", outcome: 1 },
+      { name: "Tarun Bhatia", email: "tarun.bhatia@fernwood.in", outcome: 0 },
+    ],
+    flags: [
+      { lead: "Neha Kulkarni", question: "Does the plan support multi-user seats?" },
+    ]
+  }
+];
+
+// ---------- Theme toggle ----------
+const themeToggle = document.getElementById('themeToggle');
+themeToggle.addEventListener('click', () => {
+  const root = document.documentElement;
+  const isDark = root.getAttribute('data-theme') === 'dark';
+  root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  themeToggle.textContent = isDark ? 'Dark mode' : 'Light mode';
+});
+
+// ---------- Nav ----------
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+  });
+});
+
+// ---------- Render leads table ----------
+const selectAllLeads = document.getElementById('selectAllLeads');
+const stageFilter = document.getElementById('stageFilter');
+const aiCallingBtn = document.getElementById('aiCallingBtn');
+let currentDormantCount = 0;
+let selectedCount = 0;
+
+function renderLeads(filterStage) {
+  const tbody = document.getElementById('leadsTbody');
+  tbody.innerHTML = '';
+  const filtered = leads.filter(l => filterStage === 'all' || l.stage === filterStage);
+  filtered.forEach(l => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="checkbox" class="lead-checkbox"></td>
+      <td class="lead-name">${l.name}</td>
+      <td>${l.created}</td>
+      <td class="email">${l.email}</td>
+      <td>${l.activity}</td>
+      <td class="stage-tag">${l.stage}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('filterSummary').textContent = `${filtered.length} leads matching current filter`;
+  selectedCount = 0;
+  selectAllLeads.checked = false;
+  updateAiCallingState();
+  return filtered.length;
+}
+
+function updateAiCallingState() {
+  aiCallingBtn.disabled = !(stageFilter.value === 'Dormant' || selectedCount > 0);
+}
+
+selectAllLeads.addEventListener('change', () => {
+  const boxes = document.querySelectorAll('.lead-checkbox');
+  boxes.forEach(b => b.checked = selectAllLeads.checked);
+  selectedCount = selectAllLeads.checked ? boxes.length : 0;
+  updateAiCallingState();
+});
+
+document.getElementById('leadsTbody').addEventListener('change', (e) => {
+  if (!e.target.classList.contains('lead-checkbox')) return;
+  const boxes = document.querySelectorAll('.lead-checkbox');
+  selectedCount = document.querySelectorAll('.lead-checkbox:checked').length;
+  selectAllLeads.checked = selectedCount === boxes.length && boxes.length > 0;
+  updateAiCallingState();
+});
+
+stageFilter.addEventListener('change', () => {
+  currentDormantCount = renderLeads(stageFilter.value);
+  updateAiCallingState();
+});
+currentDormantCount = renderLeads('all');
+
+// ---------- Panel open/close ----------
+const overlay = document.getElementById('overlay');
+const panel = document.getElementById('panel');
+
+function openPanel() {
+  const count = selectedCount > 0 ? selectedCount : currentDormantCount;
+  document.getElementById('panelCount').textContent = `${count} dormant leads found`;
+  populateAgentSelect();
+  resetOutputMapping();
+  overlay.classList.add('show');
+  panel.classList.add('show');
+  document.querySelector('.panel-body').scrollTop = 0;
+  refreshPanelSectionObserver();
+}
+function closePanel() {
+  overlay.classList.remove('show');
+  panel.classList.remove('show');
+}
+aiCallingBtn.addEventListener('click', () => { if (!aiCallingBtn.disabled) openPanel(); });
+document.getElementById('panelClose').addEventListener('click', closePanel);
+overlay.addEventListener('click', closePanel);
+
+// ---------- Step-focus: recede sections the creator has scrolled past ----------
+let panelSectionObserver = null;
+function refreshPanelSectionObserver() {
+  const root = document.querySelector('.panel-body');
+  const sections = document.querySelectorAll('.panel-body > .section');
+  if (panelSectionObserver) panelSectionObserver.disconnect();
+  sections.forEach((s, i) => s.classList.toggle('is-active', i === 0));
+  panelSectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      entry.target.classList.toggle('is-active', entry.intersectionRatio > 0.45);
+    });
+  }, { root, threshold: [0, 0.25, 0.45, 0.6, 1] });
+  sections.forEach(s => panelSectionObserver.observe(s));
+}
+
+// ---------- Agent select (populated from Managed Agents) ----------
+function populateAgentSelect() {
+  const select = document.getElementById('agentSelect');
+  const prevValue = select.value;
+  const eligible = agents.filter(a => a.outputVariables.length > 0);
+  select.innerHTML = eligible.map(a => `<option value="${a.id}">${a.name}</option>`).join('')
+    || '<option value="">No agents with output variables yet</option>';
+  if (eligible.some(a => String(a.id) === prevValue)) select.value = prevValue;
+}
+
+// ---------- Output mapping ("What happens next?") ----------
+let outputMapping = {};
+let outputRowIdCounter = 0;
+
+function makeDefaultRow(type) {
+  outputRowIdCounter += 1;
+  if (type === 'percentage') return { key: 'r' + outputRowIdCounter, comparator: '≥', threshold: 70, activity: '', newActivityText: '' };
+  return { key: 'r' + outputRowIdCounter, textMode: 'contains', textMatch: '', activity: '', newActivityText: '' };
+}
+
+function resetOutputMapping() {
+  outputMapping = {};
+  populateAddVariableSelect();
+  renderOutputMapping();
+}
+
+function populateAddVariableSelect() {
+  const select = document.getElementById('addVariableSelect');
+  const wrapper = document.getElementById('addVariableField');
+  const note = document.getElementById('addVariableNote');
+  const agent = getSelectedAgent();
+  const available = agent ? agent.outputVariables.filter(v => !outputMapping[v.name]) : [];
+  if (!agent || available.length === 0) {
+    wrapper.style.display = 'none';
+    note.style.display = 'block';
+    note.textContent = agent
+      ? `All output variables for ${agent.name.split(' — ')[0]} are already mapped above.`
+      : 'Select an agent to see its output variables.';
+  } else {
+    wrapper.style.display = '';
+    note.style.display = 'none';
+    select.innerHTML = '<option value="">+ Add output variable to map…</option>'
+      + available.map(v => `<option value="${v.name}">${v.name}</option>`).join('');
+  }
+}
+
+document.getElementById('addVariableSelect').addEventListener('change', (e) => {
+  const varName = e.target.value;
+  if (!varName) return;
+  const agent = getSelectedAgent();
+  const varDef = agent.outputVariables.find(v => v.name === varName);
+  if (varDef.type === 'boolean') {
+    outputMapping[varName] = {
+      type: varDef.type, description: varDef.description, hasError: false, rows: [
+        { key: 'true', label: 'True', activity: '', newActivityText: '' },
+        { key: 'false', label: 'False', activity: '', newActivityText: '' },
+      ]
+    };
+  } else {
+    outputMapping[varName] = { type: varDef.type, description: varDef.description, hasError: false, rows: [makeDefaultRow(varDef.type)] };
+  }
+  e.target.value = '';
+  populateAddVariableSelect();
+  renderOutputMapping();
+});
+
+function renderOutputRow(varName, type, row) {
+  const activityOptions = `<option value="" ${!row.activity ? 'selected' : ''}>Select lead activity…</option>`
+    + ACTIVITY_OPTIONS.map(a => `<option ${a === row.activity ? 'selected' : ''}>${a}</option>`).join('')
+    + `<option value="__create_new__" ${row.activity === '__create_new__' ? 'selected' : ''}>+ Type to create new status</option>`;
+
+  const activitySelect = `<span class="inline-select-wrap"><select class="inline-select" data-role="activity" data-var="${varName}" data-key="${row.key}">${activityOptions}</select></span>`;
+  const newActivityInput = row.activity === '__create_new__'
+    ? `<input type="text" class="inline-input inline-input-text" data-role="newActivity" data-var="${varName}" data-key="${row.key}" placeholder="New activity name" value="${row.newActivityText}">`
+    : '';
+  const removeBtn = type !== 'boolean' ? `<button class="output-row-remove" data-remove-row="${varName}" data-key2="${row.key}">Remove</button>` : '';
+
+  let conditionHtml = '';
+  if (type === 'boolean') {
+    conditionHtml = `is <b>${row.label}</b>`;
+  } else if (type === 'percentage') {
+    const comparatorOptions = ['≥', '≤', '='].map(c => `<option ${c === row.comparator ? 'selected' : ''}>${c}</option>`).join('');
+    conditionHtml = `
+      is
+      <span class="inline-select-wrap"><select class="inline-select" data-role="comparator" data-var="${varName}" data-key="${row.key}">${comparatorOptions}</select></span>
+      <input type="number" class="inline-input inline-input-num" data-role="threshold" data-var="${varName}" data-key="${row.key}" value="${row.threshold}" placeholder="0" min="0" max="100">
+      <span class="output-suffix">out of 100</span>
+    `;
+  } else {
+    const textModeOptions = `<option value="contains" ${row.textMode === 'contains' ? 'selected' : ''}>contains</option>
+      <option value="exact" ${row.textMode === 'exact' ? 'selected' : ''}>exactly matches</option>`;
+    conditionHtml = `
+      <span class="inline-select-wrap"><select class="inline-select" data-role="textMode" data-var="${varName}" data-key="${row.key}">${textModeOptions}</select></span>
+      <input type="text" class="inline-input inline-input-text" data-role="textMatch" data-var="${varName}" data-key="${row.key}" placeholder="e.g. price" value="${row.textMatch || ''}">
+    `;
+  }
+
+  return `
+    <div class="output-row">
+      <div class="output-sentence">
+        If <span class="var-ref">${varName}</span> ${conditionHtml} → trigger ${activitySelect} ${newActivityInput} ${removeBtn}
+      </div>
+    </div>
+  `;
+}
+
+function renderOutputMapping() {
+  const container = document.getElementById('outputMapping');
+  const varNames = Object.keys(outputMapping);
+  if (varNames.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = varNames.map(varName => {
+    const group = outputMapping[varName];
+    const rowsHtml = group.rows.map(row => renderOutputRow(varName, group.type, row)).join('');
+    const canAddRow = group.type !== 'boolean';
+    return `
+      <div class="output-var-group">
+        <div class="output-var-head">
+          <div class="output-var-name">${varName} <span class="output-var-type">(${group.type})</span></div>
+          <button class="remove-link" data-remove-block="${varName}">Remove variable</button>
+        </div>
+        ${group.description ? `<div class="output-var-desc">${group.description}</div>` : ''}
+        <div class="output-rows">${rowsHtml}</div>
+        ${canAddRow ? `<button class="btn output-add-row" data-add-row="${varName}">+ Add row</button>` : ''}
+        <div class="output-note">Any case not mapped above will result in no activity change for that lead.</div>
+        ${group.hasError ? `<div class="output-warning show">At least one case must be mapped to a lead activity before this can be launched.</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function validateOutputMapping() {
+  let valid = true;
+  Object.values(outputMapping).forEach(group => {
+    group.hasError = !group.rows.some(r => r.activity);
+    if (group.hasError) valid = false;
+  });
+  renderOutputMapping();
+  return valid;
+}
+
+document.getElementById('outputMapping').addEventListener('change', (e) => {
+  const varName = e.target.dataset.var;
+  const key = e.target.dataset.key;
+  if (!varName || !outputMapping[varName]) return;
+  const row = outputMapping[varName].rows.find(r => r.key === key);
+  if (!row) return;
+  const role = e.target.dataset.role;
+  if (role === 'activity') { row.activity = e.target.value; renderOutputMapping(); return; }
+  if (role === 'newActivity') row.newActivityText = e.target.value;
+  if (role === 'comparator') row.comparator = e.target.value;
+  if (role === 'threshold') row.threshold = e.target.value;
+  if (role === 'textMode') row.textMode = e.target.value;
+  if (role === 'textMatch') row.textMatch = e.target.value;
+});
+
+document.getElementById('outputMapping').addEventListener('click', (e) => {
+  if (e.target.dataset.addRow) {
+    const group = outputMapping[e.target.dataset.addRow];
+    group.rows.push(makeDefaultRow(group.type));
+    renderOutputMapping();
+  }
+  if (e.target.dataset.removeRow) {
+    const group = outputMapping[e.target.dataset.removeRow];
+    group.rows = group.rows.filter(r => r.key !== e.target.dataset.key2);
+    renderOutputMapping();
+  }
+  if (e.target.dataset.removeBlock) {
+    delete outputMapping[e.target.dataset.removeBlock];
+    populateAddVariableSelect();
+    renderOutputMapping();
+  }
+});
+
+document.getElementById('agentSelect').addEventListener('change', resetOutputMapping);
+
+populateAgentSelect();
+resetOutputMapping();
+
+// ---------- Managed Agents ----------
+let editingAgent = null;
+let varRowIdCounter = 0;
+
+function renderAgentsList() {
+  const tbody = document.getElementById('agentsTbody');
+  tbody.innerHTML = '';
+  agents.forEach(a => {
+    const tr = document.createElement('tr');
+    tr.className = 'run-row';
+    tr.innerHTML = `
+      <td class="lead-name">${a.name}</td>
+      <td>${a.inputVariables.length}</td>
+      <td>${a.outputVariables.length}</td>
+      <td class="stage-tag">${a.outputVariables.length > 0 ? 'Yes' : 'No — add an output variable'}</td>
+    `;
+    tr.addEventListener('click', () => openAgentDetail(a.id));
+    tbody.appendChild(tr);
+  });
+}
+renderAgentsList();
+
+function showAgentsList() {
+  document.getElementById('agentDetailView').style.display = 'none';
+  document.getElementById('agentsListView').style.display = 'block';
+}
+
+function openAgentDetail(agentId) {
+  document.getElementById('agentsListView').style.display = 'none';
+  document.getElementById('agentDetailView').style.display = 'block';
+  document.getElementById('agentSaveError').style.display = 'none';
+
+  if (agentId == null) {
+    editingAgent = { id: null, name: '', inputVariables: [], outputVariables: [] };
+  } else {
+    const src = agents.find(a => a.id === agentId);
+    editingAgent = {
+      id: src.id,
+      name: src.name,
+      inputVariables: src.inputVariables.map(v => ({ id: ++varRowIdCounter, ...v })),
+      outputVariables: src.outputVariables.map(v => ({ id: ++varRowIdCounter, ...v })),
+    };
+  }
+  document.getElementById('agentNameInput').value = editingAgent.name;
+  renderVarRows();
+}
+
+function renderVarRows() {
+  const inputContainer = document.getElementById('inputVarRows');
+  inputContainer.innerHTML = editingAgent.inputVariables.map(row => `
+    <div class="var-row">
+      <input type="text" data-kind="input" data-role="name" data-id="${row.id}" placeholder="Input variable name (e.g. lead_name)" value="${row.name}">
+      <select data-kind="input" data-role="mapsTo" data-id="${row.id}">
+        ${LEAD_FIELDS.map(f => `<option ${f === row.mapsTo ? 'selected' : ''}>${f}</option>`).join('')}
+      </select>
+      <button class="remove-link" data-remove-var="input" data-id="${row.id}">Remove</button>
+    </div>
+  `).join('') || '<div class="static-note">No input variables yet.</div>';
+
+  const outputContainer = document.getElementById('outputVarRows');
+  outputContainer.innerHTML = editingAgent.outputVariables.map(row => `
+    <div class="var-row">
+      <input type="text" data-kind="output" data-role="name" data-id="${row.id}" placeholder="Output variable name (e.g. RCB_requested)" value="${row.name}">
+      <select data-kind="output" data-role="type" data-id="${row.id}">
+        <option value="boolean" ${row.type === 'boolean' ? 'selected' : ''}>Boolean</option>
+        <option value="percentage" ${row.type === 'percentage' ? 'selected' : ''}>Percentage</option>
+        <option value="text" ${row.type === 'text' ? 'selected' : ''}>Text</option>
+      </select>
+      <input type="text" data-kind="output" data-role="description" data-id="${row.id}" placeholder="Short description (optional)" value="${row.description || ''}">
+      <button class="remove-link" data-remove-var="output" data-id="${row.id}">Remove</button>
+    </div>
+  `).join('') || '<div class="static-note">No output variables yet — add one so this agent can be used in workflows.</div>';
+}
+
+document.getElementById('createAgentBtn').addEventListener('click', () => openAgentDetail(null));
+document.getElementById('agentDetailBack').addEventListener('click', showAgentsList);
+document.getElementById('agentNameInput').addEventListener('input', (e) => { editingAgent.name = e.target.value; });
+
+document.getElementById('addInputVarBtn').addEventListener('click', () => {
+  editingAgent.inputVariables.push({ id: ++varRowIdCounter, name: '', mapsTo: LEAD_FIELDS[0] });
+  renderVarRows();
+});
+document.getElementById('addOutputVarBtn').addEventListener('click', () => {
+  editingAgent.outputVariables.push({ id: ++varRowIdCounter, name: '', type: 'boolean', description: '' });
+  renderVarRows();
+});
+
+function handleVarRowChange(e) {
+  const kind = e.target.dataset.kind;
+  const role = e.target.dataset.role;
+  if (!kind || !role) return;
+  const id = parseInt(e.target.dataset.id, 10);
+  const list = kind === 'input' ? editingAgent.inputVariables : editingAgent.outputVariables;
+  const row = list.find(r => r.id === id);
+  if (!row) return;
+  row[role] = e.target.value;
+}
+document.getElementById('inputVarRows').addEventListener('change', handleVarRowChange);
+document.getElementById('outputVarRows').addEventListener('change', handleVarRowChange);
+
+function handleVarRowRemove(e) {
+  const kind = e.target.dataset.removeVar;
+  if (!kind) return;
+  const id = parseInt(e.target.dataset.id, 10);
+  if (kind === 'input') editingAgent.inputVariables = editingAgent.inputVariables.filter(r => r.id !== id);
+  else editingAgent.outputVariables = editingAgent.outputVariables.filter(r => r.id !== id);
+  renderVarRows();
+}
+document.getElementById('inputVarRows').addEventListener('click', handleVarRowRemove);
+document.getElementById('outputVarRows').addEventListener('click', handleVarRowRemove);
+
+document.getElementById('saveAgentBtn').addEventListener('click', () => {
+  const name = document.getElementById('agentNameInput').value.trim();
+  const errorEl = document.getElementById('agentSaveError');
+  if (!name) {
+    errorEl.textContent = 'Agent name is required.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  errorEl.style.display = 'none';
+
+  const cleanInputs = editingAgent.inputVariables.filter(v => v.name.trim()).map(({ name, mapsTo }) => ({ name, mapsTo }));
+  const cleanOutputs = editingAgent.outputVariables.filter(v => v.name.trim()).map(({ name, type, description }) => ({ name, type, description }));
+
+  if (editingAgent.id == null) {
+    agentIdCounter += 1;
+    agents.push({ id: agentIdCounter, name, inputVariables: cleanInputs, outputVariables: cleanOutputs });
+  } else {
+    const target = agents.find(a => a.id === editingAgent.id);
+    target.name = name;
+    target.inputVariables = cleanInputs;
+    target.outputVariables = cleanOutputs;
+  }
+  renderAgentsList();
+  showAgentsList();
+  showToast('Agent saved');
+});
+
+// ---------- Abort rules enable toggle ----------
+const abortEnable = document.getElementById('abortEnable');
+const abortTime = document.getElementById('abortTime');
+const resumeDay = document.getElementById('resumeDay');
+const resumeTime = document.getElementById('resumeTime');
+abortEnable.addEventListener('change', () => {
+  abortTime.disabled = !abortEnable.checked;
+  resumeDay.disabled = !abortEnable.checked;
+  resumeTime.disabled = !abortEnable.checked;
+});
+
+// ---------- Scheduling estimate + throttle alert ----------
+const batchSizeInput = document.getElementById('batchSize');
+const estimateText = document.getElementById('estimateText');
+const throttleAlert = document.getElementById('throttleAlert');
+
+function updateEstimate() {
+  const size = parseInt(batchSizeInput.value, 10) || 0;
+  const minutesPerCall = 2; // mocked pace
+  const totalMinutes = size * minutesPerCall;
+  const hours = totalMinutes / 60;
+  estimateText.innerHTML = `Estimated completion: <b>~${hours.toFixed(1)} hours</b> after start`;
+  throttleAlert.classList.toggle('show', hours > 6);
+}
+batchSizeInput.addEventListener('input', updateEstimate);
+updateEstimate();
+
+// ---------- Launch workflow ----------
+document.getElementById('launchBtn').addEventListener('click', () => {
+  if (!validateOutputMapping()) return;
+  const size = parseInt(batchSizeInput.value, 10) || currentDormantCount;
+  const total = currentDormantCount || size;
+  const outcome1 = Math.round(total * 0.22);
+  const outcome0 = total - outcome1;
+
+  const agent = getSelectedAgent();
+  const newRun = {
+    name: `Dormant Reactivation — ${agent ? agent.name.split(' — ')[0] : 'Agent'}`,
+    date: new Date().toISOString().slice(0,10) === undefined ? "2026-08-04" : "2026-08-04",
+    total: total,
+    outcome1: outcome1,
+    outcome0: outcome0,
+    status: "In Progress",
+    leads: leads.filter(l => l.stage === 'Dormant').map((l, i) => ({
+      name: l.name, email: l.email, outcome: i % 4 === 0 ? 1 : 0
+    })),
+    flags: [
+      { lead: leads.find(l=>l.stage==='Dormant')?.name || 'Lead', question: "Can I switch my plan mid-cycle without penalty?" }
+    ]
+  };
+  historyRuns.unshift(newRun);
+  renderHistory();
+  closePanel();
+  showToast('Workflow launched — check AI Calling History');
+});
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3200);
+}
+
+// ---------- History list ----------
+function renderHistory() {
+  const tbody = document.getElementById('historyTbody');
+  tbody.innerHTML = '';
+  historyRuns.forEach((run, idx) => {
+    const tr = document.createElement('tr');
+    tr.className = 'run-row';
+    tr.innerHTML = `
+      <td class="lead-name">${run.name}</td>
+      <td>${run.date}</td>
+      <td>${run.total}</td>
+      <td>${run.outcome1}</td>
+      <td>${run.outcome0}</td>
+      <td class="${run.status === 'Completed' ? 'status-completed' : 'status-progress'}">${run.status}</td>
+    `;
+    tr.addEventListener('click', () => openDetail(idx));
+    tbody.appendChild(tr);
+  });
+}
+renderHistory();
+
+// ---------- History detail ----------
+function openDetail(idx) {
+  const run = historyRuns[idx];
+  document.getElementById('historyListView').style.display = 'none';
+  document.getElementById('historyDetailView').style.display = 'block';
+  document.getElementById('detailTitle').textContent = run.name;
+  document.getElementById('detailSubhead').textContent = `${run.date} — ${run.total} leads called — ${run.status}`;
+
+  const tbody = document.getElementById('detailTbody');
+  tbody.innerHTML = '';
+  run.leads.forEach(l => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="lead-name">${l.name}</td><td class="email">${l.email}</td><td>${l.outcome === 1 ? 'Outcome 1 — Positive intent' : 'Outcome 0 — No pickup / refused'}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  const flagsEl = document.getElementById('detailFlags');
+  flagsEl.innerHTML = '';
+  if (run.flags.length === 0) {
+    flagsEl.innerHTML = '<div class="flag-item">No unanswered questions logged for this run.</div>';
+  } else {
+    run.flags.forEach(f => {
+      const div = document.createElement('div');
+      div.className = 'flag-item';
+      div.innerHTML = `<span>${f.lead}</span>${f.question}`;
+      flagsEl.appendChild(div);
+    });
+  }
+}
+document.getElementById('detailBackBtn').addEventListener('click', () => {
+  document.getElementById('historyDetailView').style.display = 'none';
+  document.getElementById('historyListView').style.display = 'block';
+});
+
+// ---------- Ask AI (mocked) ----------
+const askAiInput = document.getElementById('askAiInput');
+const askAiAnswer = document.getElementById('askAiAnswer');
+
+function mockAskAI(query) {
+  const q = query.toLowerCase();
+  if (q.includes('emi') || q.includes('installment')) {
+    return "Across 2 past runs, 3 leads asked about EMI or installment options — mostly around splitting payments into 3 vs 6 months.";
+  }
+  if (q.includes('discount') || q.includes('price') || q.includes('pricing')) {
+    return "5 leads across past runs raised pricing or discount questions, most commonly about annual upfront discounts.";
+  }
+  if (q.includes('outcome') || q.includes('positive') || q.includes('success')) {
+    const totalOutcome1 = historyRuns.reduce((s,r)=>s+r.outcome1,0);
+    return `${totalOutcome1} leads were classified outcome-1 (positive intent) across all logged runs.`;
+  }
+  return "Based on past run history: this looks like a one-off question — 2 similar mentions found across prior calls, mostly logged as flagged questions rather than resolved on-call.";
+}
+document.getElementById('askAiBtn').addEventListener('click', () => {
+  const val = askAiInput.value.trim();
+  if (!val) return;
+  askAiAnswer.innerHTML = `<b>Q: ${val}</b><br>${mockAskAI(val)}`;
+  askAiAnswer.classList.add('show');
+});
+askAiInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('askAiBtn').click();
+});
+</script>
+</body>
+</html>
