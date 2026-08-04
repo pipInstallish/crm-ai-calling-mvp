@@ -281,6 +281,9 @@
   /* ---------- Managed Agents ---------- */
   .var-row{ display:flex; align-items:center; gap:10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
   .var-row input, .var-row select{ flex:1; min-width:0; width:auto; }
+  .var-row-header{ display:flex; align-items:center; gap:10px; padding: 0 0 8px; }
+  .var-row-header span{ flex:1; min-width:0; font-size:11px; color: var(--text-faint); font-weight:500; }
+  .var-row-header .var-row-header-spacer{ flex:0 0 auto; width:50px; }
 
   .toast{
     position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
@@ -1213,7 +1216,14 @@ function openAgentDetail(agentId) {
 
 function renderVarRows() {
   const inputContainer = document.getElementById('inputVarRows');
-  inputContainer.innerHTML = editingAgent.inputVariables.map(row => `
+  const inputHeader = editingAgent.inputVariables.length ? `
+    <div class="var-row-header">
+      <span>Input variable name</span>
+      <span>Lead attribute to map against</span>
+      <span class="var-row-header-spacer"></span>
+    </div>
+  ` : '';
+  inputContainer.innerHTML = inputHeader + (editingAgent.inputVariables.map(row => `
     <div class="var-row">
       <input type="text" data-kind="input" data-role="name" data-id="${row.id}" placeholder="Input variable name (e.g. lead_name)" value="${row.name}">
       <select data-kind="input" data-role="mapsTo" data-id="${row.id}">
@@ -1221,10 +1231,18 @@ function renderVarRows() {
       </select>
       <button class="remove-link" data-remove-var="input" data-id="${row.id}">Remove</button>
     </div>
-  `).join('') || '<div class="static-note">No input variables yet.</div>';
+  `).join('') || '<div class="static-note">No input variables yet.</div>');
 
   const outputContainer = document.getElementById('outputVarRows');
-  outputContainer.innerHTML = editingAgent.outputVariables.map(row => `
+  const outputHeader = editingAgent.outputVariables.length ? `
+    <div class="var-row-header">
+      <span>Output variable name</span>
+      <span>Variable type</span>
+      <span>Description</span>
+      <span class="var-row-header-spacer"></span>
+    </div>
+  ` : '';
+  outputContainer.innerHTML = outputHeader + (editingAgent.outputVariables.map(row => `
     <div class="var-row">
       <input type="text" data-kind="output" data-role="name" data-id="${row.id}" placeholder="Output variable name (e.g. RCB_requested)" value="${row.name}">
       <select data-kind="output" data-role="type" data-id="${row.id}">
@@ -1235,7 +1253,7 @@ function renderVarRows() {
       <input type="text" data-kind="output" data-role="description" data-id="${row.id}" placeholder="Short description (optional)" value="${row.description || ''}">
       <button class="remove-link" data-remove-var="output" data-id="${row.id}">Remove</button>
     </div>
-  `).join('') || '<div class="static-note">No output variables yet — add one so this agent can be used in workflows.</div>';
+  `).join('') || '<div class="static-note">No output variables yet — add one so this agent can be used in workflows.</div>');
 }
 
 document.getElementById('createAgentBtn').addEventListener('click', () => startAgentWizard());
@@ -1362,7 +1380,14 @@ function renderWizardProgress() {
 
 function renderWizardInputRows() {
   const container = document.getElementById('wizInputVarRows');
-  container.innerHTML = wizardAgent.inputVariables.map(row => `
+  const header = wizardAgent.inputVariables.length ? `
+    <div class="var-row-header">
+      <span>Input variable name</span>
+      <span>Lead attribute to map against</span>
+      <span class="var-row-header-spacer"></span>
+    </div>
+  ` : '';
+  container.innerHTML = header + (wizardAgent.inputVariables.map(row => `
     <div class="var-row">
       <input type="text" data-role="name" data-id="${row.id}" placeholder="Input variable name (e.g. lead_name)" value="${row.name}">
       <select data-role="mapsTo" data-id="${row.id}">
@@ -1370,7 +1395,7 @@ function renderWizardInputRows() {
       </select>
       <button class="remove-link" data-remove="${row.id}">Remove</button>
     </div>
-  `).join('') || '<div class="static-note">No input variables yet.</div>';
+  `).join('') || '<div class="static-note">No input variables yet.</div>');
   container.querySelectorAll('input, select').forEach(el => {
     el.addEventListener('change', () => {
       const row = wizardAgent.inputVariables.find(r => r.id === parseInt(el.dataset.id, 10));
@@ -1387,7 +1412,15 @@ function renderWizardInputRows() {
 
 function renderWizardOutputRows() {
   const container = document.getElementById('wizOutputVarRows');
-  container.innerHTML = wizardAgent.outputVariables.map(row => `
+  const header = wizardAgent.outputVariables.length ? `
+    <div class="var-row-header">
+      <span>Output variable name</span>
+      <span>Variable type</span>
+      <span>Description</span>
+      <span class="var-row-header-spacer"></span>
+    </div>
+  ` : '';
+  container.innerHTML = header + (wizardAgent.outputVariables.map(row => `
     <div class="var-row">
       <input type="text" data-role="name" data-id="${row.id}" placeholder="Output variable name (e.g. RCB_requested)" value="${row.name}">
       <select data-role="type" data-id="${row.id}">
@@ -1398,7 +1431,7 @@ function renderWizardOutputRows() {
       <input type="text" data-role="description" data-id="${row.id}" placeholder="Short description (optional)" value="${row.description || ''}">
       <button class="remove-link" data-remove="${row.id}">Remove</button>
     </div>
-  `).join('') || '<div class="static-note">No output variables yet.</div>';
+  `).join('') || '<div class="static-note">No output variables yet.</div>');
   container.querySelectorAll('input, select').forEach(el => {
     el.addEventListener('change', () => {
       const row = wizardAgent.outputVariables.find(r => r.id === parseInt(el.dataset.id, 10));
