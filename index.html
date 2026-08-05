@@ -285,6 +285,52 @@
   .var-row-header span{ flex:1; min-width:0; font-size:11px; color: var(--text-faint); font-weight:500; }
   .var-row-header .var-row-header-spacer{ flex:0 0 auto; width:50px; }
 
+  /* ---------- Output variable editor: enum keys / sub-keys ---------- */
+  .outvar-block{ padding: 20px 0; border-top: 1px solid var(--line); }
+  .outvar-block:first-child{ border-top:none; padding-top:0; }
+  .outvar-head{ display:flex; align-items:center; gap:10px; }
+  .outvar-head input[type="text"]{ flex:2; min-width:0; }
+  .outvar-head select{ flex:1; min-width:0; }
+  .outvar-desc{ width:100%; margin-top:8px; }
+
+  .keys-editor{ margin-top:16px; padding-left:18px; border-left: 1px solid var(--line); }
+  .keys-header-label{ font-size:11px; color: var(--text-faint); font-weight:500; display:block; margin-bottom:10px; }
+  .key-row{ padding: 14px 0; border-top: 1px solid var(--line); }
+  .key-row:first-child{ border-top:none; padding-top:0; }
+  .key-row-main{ display:flex; align-items:center; gap:10px; }
+  .key-row-main input{ flex:1; min-width:0; }
+  .key-desc{ width:100%; margin-top:8px; font-family:inherit; font-size:13px; resize:vertical; }
+  .key-row-fields{ margin-top:10px; }
+  .key-row-fields label{ font-size:11.5px; color: var(--text-faint); display:block; margin-bottom:6px; }
+  .key-row-fields select{ width:100%; }
+
+  .automation-combo{ position:relative; margin-top:12px; }
+  .automation-combo label{ font-size:11.5px; color: var(--text-faint); display:block; margin-bottom:6px; }
+  .automation-input{ width:100%; }
+  .automation-options{
+    position:absolute; left:0; right:0; top:100%; margin-top:2px;
+    background: var(--panel-bg); border:1px solid var(--line-strong); border-radius:3px;
+    max-height:180px; overflow-y:auto; z-index:20;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  }
+  .automation-option{ padding:8px 10px; font-size:13px; cursor:pointer; }
+  .automation-option:hover{ background: var(--bg-alt); }
+
+  .subkeys-editor{ margin-top:14px; padding-left:18px; border-left: 1px dashed var(--line-strong); }
+  .subkey-row{ display:flex; align-items:center; gap:10px; padding: 6px 0; }
+  .subkey-row input{ flex:1; min-width:0; }
+
+  /* ---------- Retries (AI Calling — Scheduling) ---------- */
+  .retry-row{ display:flex; align-items:flex-end; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .retry-row .field{ flex:1; min-width:130px; }
+  .retry-row .field-small{ flex:0 0 90px; }
+
+  /* ---------- Read-only agent action summary (AI Calling) ---------- */
+  .summary-key-line{ font-size:13px; color: var(--text); padding:6px 0; display:flex; flex-wrap:wrap; gap:6px; align-items:baseline; }
+  .summary-key-value{ font-weight:600; }
+  .summary-arrow{ color: var(--text-faint); }
+  .summary-activity-missing{ color: var(--danger); }
+
   .toast{
     position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
     background: var(--accent); color: var(--accent-contrast);
@@ -567,10 +613,17 @@
   <div class="panel-body">
 
     <div class="section">
-      <div class="section-title"><span class="step-num">1</span>Select AI agent</div>
-      <div class="helper-note" id="agentSelectHelperNote" style="margin-top:0; margin-bottom:10px;">Only agents with at least one output variable can be selected — configure these in Managed Agents.</div>
-      <div class="field" id="agentSelectField" style="width:100%;">
-        <select id="agentSelect" style="width:100%;"></select>
+      <div class="section-title"><span class="step-num">1</span>Select agent</div>
+      <div class="helper-note" id="agentSelectHelperNote" style="margin-top:0; margin-bottom:10px;">Only agents with at least one output-variable key mapped to a lead activity can be selected — configure these in Managed Agents.</div>
+      <div class="row2" id="agentSelectField">
+        <div class="field">
+          <label>Agent</label>
+          <select id="agentSelect" style="width:100%;"></select>
+        </div>
+        <div class="field">
+          <label>Version</label>
+          <select id="agentVersionSelect" style="width:100%;" disabled></select>
+        </div>
       </div>
       <div id="agentEmptyState" style="display:none;">
         <div class="static-note" style="margin-bottom:10px;">No agents configured yet.</div>
@@ -579,18 +632,33 @@
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="step-num">2</span>What happens next?</div>
-      <div class="static-note" style="margin-bottom:14px;">AI calls the lead — what should happen after the call?</div>
-      <div class="fixed-step-text"><b>AI calls the lead</b></div>
-      <div id="outputMapping"></div>
-      <div class="field" id="addVariableField" style="width:100%; margin-top:10px;">
-        <select id="addVariableSelect" style="width:100%;"></select>
+      <div class="section-title"><span class="step-num">2</span>Connection</div>
+      <div class="static-note" style="margin-bottom:14px;">Which number should place these calls?</div>
+      <div class="row2">
+        <div class="field">
+          <label>Connection</label>
+          <select id="connectionSelect" style="width:100%;">
+            <option value="">Select a connection</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Phone number</label>
+          <select id="phoneNumberSelect" style="width:100%;" disabled>
+            <option value="">Select a connection first</option>
+          </select>
+        </div>
       </div>
-      <div class="helper-note" id="addVariableNote" style="margin-top:10px; display:none;"></div>
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="step-num">3</span>Scheduling</div>
+      <div class="section-title"><span class="step-num">3</span>What happens next?</div>
+      <div class="static-note" style="margin-bottom:14px;">AI calls the lead — here's what this agent will do with the outcome, configured in Managed Agents.</div>
+      <div class="fixed-step-text"><b>AI calls the lead</b></div>
+      <div id="agentActionSummary"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="step-num">4</span>Scheduling</div>
       <div class="static-note" style="margin-bottom:14px;">When should calling begin</div>
       <div class="row2">
         <div class="field">
@@ -604,10 +672,16 @@
       </div>
       <div class="estimate" id="estimateText">Estimated completion: <b>~3.3 hours</b> after start</div>
       <div class="alert" id="throttleAlert">This batch may run late — consider reducing lead count.</div>
+
+      <div class="section-title" style="font-size:13.5px; margin-top:28px; margin-bottom:6px;">Retries</div>
+      <div class="static-note" style="margin-bottom:14px;">Retry a batch automatically when calls fail, per failure category.</div>
+      <div id="retryRulesContainer"></div>
+      <button class="btn" id="addRetryRuleBtn" style="margin-top:10px;">+ Add retry rule</button>
+      <div class="output-note">Retries respect the abort rule window and count toward the lead's total attempt limit.</div>
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="step-num">4</span>Abort rules</div>
+      <div class="section-title"><span class="step-num">5</span>Abort rules</div>
       <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; cursor:pointer;">
         <input type="checkbox" id="abortEnable">
         Don't call leads outside a set window
@@ -670,34 +744,74 @@ const LEAD_FIELDS = [
 ];
 const ACTIVITY_OPTIONS = ["Callback Scheduled", "Interested — Follow Up", "Requested Info Pack"];
 
+const AUTOMATIONS = [
+  "Send callback confirmation SMS", "Send WhatsApp reminder", "Notify Sales Ops on Slack",
+  "Create follow-up task for owner", "Add to nurture email sequence", "Send payment link via SMS",
+  "Escalate to team lead", "Send course brochure email", "Trigger fee-reminder email",
+  "Add to re-engagement campaign", "Notify counselor via app", "Send satisfaction survey",
+  "Schedule demo reminder", "Send renewal offer email", "Flag for manual review",
+  "Update lead score", "Send welcome-back email", "Assign to retention queue",
+];
+
+const CONNECTIONS = [
+  { id: "exotel-primary", name: "Exotel — Primary", numbers: ["+91 22 6140 1000", "+91 22 6140 1001"] },
+  { id: "twilio-backup", name: "Twilio — Backup", numbers: ["+1 415 555 0132", "+1 415 555 0198"] },
+  { id: "ozonetel-india", name: "Ozonetel — India Toll-Free", numbers: ["1800 209 4455", "1800 209 4456"] },
+];
+
+const DEFAULT_VERSIONS = [
+  { id: "v1-0", label: "v1.0" },
+  { id: "v1-1", label: "v1.1" },
+  { id: "v2-0-beta", label: "v2.0 (beta)" },
+];
+
 let agents = [
   {
     id: 1,
     name: "Aria — Reactivation Specialist",
+    versions: DEFAULT_VERSIONS,
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
     ],
     outputVariables: [
-      { name: "RCB_requested", type: "boolean", description: "Whether the lead asked for a callback" },
+      {
+        name: "callback_status", type: "enum", description: "This captures the overall callback status",
+        keys: [
+          { value: "requested", description: "Use this if the lead explicitly asked to be called back.", activity: "Callback Scheduled", automation: "Send callback confirmation SMS", subKeys: [] },
+          { value: "scheduled", description: "Use this if a specific day or time was agreed for a follow-up call.", activity: "Interested — Follow Up", automation: "", subKeys: [] },
+          { value: "not_required", description: "Use this if the lead said they don't need a callback.", activity: "Requested Info Pack", automation: "", subKeys: ["Already enrolled", "No longer interested", "Price concern", "Chose competitor"] },
+          { value: "unknown", description: "Use this if intent could not be determined from the call.", activity: "", automation: "", subKeys: [] },
+        ],
+      },
       { name: "objection_reason", type: "text", description: "What the lead said if they declined" },
     ],
   },
   {
     id: 2,
     name: "Kabir — Renewal & Retention",
+    versions: DEFAULT_VERSIONS,
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
       { name: "last_activity", mapsTo: "Last Notable Activity" },
     ],
     outputVariables: [
-      { name: "renewal_confidence", type: "percentage", description: "Likelihood the lead renews their plan" },
+      {
+        name: "plan_renewed", type: "enum", description: "This captures whether the lead renewed their plan",
+        keys: [
+          { value: "renewed", description: "Use this if the lead confirmed renewal on the call.", activity: "Interested — Follow Up", automation: "Send renewal offer email", subKeys: [] },
+          { value: "not_renewed", description: "Use this if the lead declined to renew.", activity: "Requested Info Pack", automation: "", subKeys: ["Price too high", "Switching provider", "No longer needs it"] },
+          { value: "undecided", description: "Use this if the lead needs more time to decide.", activity: "Callback Scheduled", automation: "", subKeys: [] },
+        ],
+      },
+      { name: "renewal_confidence", type: "number", description: "Likelihood the lead renews their plan, 0–100" },
     ],
   },
   {
     id: 3,
     name: "Noor — Warm Callback Agent",
+    versions: DEFAULT_VERSIONS,
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
@@ -707,94 +821,147 @@ let agents = [
   {
     id: 4,
     name: "Dormant Warmup",
+    versions: DEFAULT_VERSIONS,
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
       { name: "days_since_activity", mapsTo: "Days Since Last Activity" },
     ],
     outputVariables: [
-      { name: "warmup_success", type: "boolean", description: "Whether the lead re-engaged positively" },
-      { name: "interest_score", type: "percentage", description: "Predicted interest in reactivating, 0–100" },
+      {
+        name: "warmup_result", type: "enum", description: "Whether the lead re-engaged positively",
+        keys: [
+          { value: "reengaged", description: "Use this if the lead responded positively and showed renewed interest.", activity: "Interested — Follow Up", automation: "Add to re-engagement campaign", subKeys: [] },
+          { value: "not_reengaged", description: "Use this if the lead showed no interest in reactivating.", activity: "", automation: "", subKeys: [] },
+        ],
+      },
+      { name: "interest_score", type: "number", description: "Predicted interest in reactivating, 0–100" },
     ],
   },
   {
     id: 5,
     name: "Fresh Low-Intent Qualifier",
+    versions: DEFAULT_VERSIONS,
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
       { name: "lead_source", mapsTo: "Lead Source" },
     ],
     outputVariables: [
-      { name: "qualified", type: "boolean", description: "Whether the lead meets minimum qualification criteria" },
+      {
+        name: "qualification_result", type: "enum", description: "Whether the lead meets minimum qualification criteria",
+        keys: [
+          { value: "qualified", description: "Use this if the lead meets the minimum qualification bar.", activity: "Interested — Follow Up", automation: "Notify Sales Ops on Slack", subKeys: [] },
+          { value: "not_qualified", description: "Use this if the lead does not meet the qualification bar.", activity: "", automation: "", subKeys: [] },
+        ],
+      },
       { name: "objection_reason", type: "text", description: "Reason given for low interest" },
     ],
   },
   {
     id: 6,
     name: "TRO Reminder-1",
+    versions: DEFAULT_VERSIONS,
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
       { name: "course_track", mapsTo: "Course Track" },
     ],
     outputVariables: [
-      { name: "reminder_acknowledged", type: "boolean", description: "Whether the lead confirmed they'll attend" },
+      {
+        name: "reminder_status", type: "enum", description: "Whether the lead confirmed they'll attend",
+        keys: [
+          { value: "confirmed", description: "Use this if the lead confirmed they will attend.", activity: "Interested — Follow Up", automation: "Schedule demo reminder", subKeys: [] },
+          { value: "declined", description: "Use this if the lead said they will not attend.", activity: "", automation: "", subKeys: [] },
+        ],
+      },
     ],
   },
   {
     id: 7,
     name: "TRO Reminder-2",
+    versions: DEFAULT_VERSIONS,
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
       { name: "preferred_language", mapsTo: "Preferred Language" },
     ],
     outputVariables: [
-      { name: "reschedule_requested", type: "boolean", description: "Whether the lead asked to reschedule" },
-      { name: "interest_score", type: "percentage", description: "Confidence the lead will attend, 0–100" },
+      {
+        name: "reschedule_result", type: "enum", description: "Whether the lead asked to reschedule",
+        keys: [
+          { value: "requested", description: "Use this if the lead asked to move their session to another time.", activity: "Callback Scheduled", automation: "", subKeys: [] },
+          { value: "not_requested", description: "Use this if the lead is fine with the current schedule.", activity: "", automation: "", subKeys: [] },
+        ],
+      },
+      { name: "interest_score", type: "number", description: "Confidence the lead will attend, 0–100" },
     ],
   },
   {
     id: 8,
     name: "Missed Callback Recovery",
+    versions: DEFAULT_VERSIONS,
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
       { name: "last_activity", mapsTo: "Last Notable Activity" },
     ],
     outputVariables: [
-      { name: "RCB_requested", type: "boolean", description: "Whether the lead asked for a callback again" },
+      {
+        name: "callback_status", type: "enum", description: "Whether the lead asked for a callback again",
+        keys: [
+          { value: "requested", description: "Use this if the lead asked for a callback again.", activity: "Callback Scheduled", automation: "Send callback confirmation SMS", subKeys: [] },
+          { value: "not_required", description: "Use this if the lead declined a further callback.", activity: "", automation: "", subKeys: ["Already enrolled", "No longer interested", "Price concern"] },
+        ],
+      },
       { name: "objection_reason", type: "text", description: "What the lead said when declining the callback" },
     ],
   },
   {
     id: 9,
     name: "Payment Follow-up",
+    versions: DEFAULT_VERSIONS,
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
       { name: "city", mapsTo: "City" },
     ],
     outputVariables: [
-      { name: "payment_confirmed", type: "boolean", description: "Whether the lead confirmed payment" },
-      { name: "payment_confidence", type: "percentage", description: "Likelihood of completing payment this week" },
+      {
+        name: "payment_result", type: "enum", description: "Whether the lead confirmed payment",
+        keys: [
+          { value: "confirmed", description: "Use this if the lead confirmed they've made the payment.", activity: "Interested — Follow Up", automation: "", subKeys: [] },
+          { value: "not_confirmed", description: "Use this if the lead has not yet paid.", activity: "Callback Scheduled", automation: "Trigger fee-reminder email", subKeys: [] },
+        ],
+      },
+      { name: "payment_confidence", type: "number", description: "Likelihood of completing payment this week" },
     ],
   },
   {
     id: 10,
     name: "Session Reminder",
+    versions: DEFAULT_VERSIONS,
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
       { name: "last_test_score", mapsTo: "Last Test Score" },
     ],
     outputVariables: [
-      { name: "attendance_confirmed", type: "boolean", description: "Whether the lead confirmed attendance" },
+      {
+        name: "attendance_result", type: "enum", description: "Whether the lead confirmed attendance",
+        keys: [
+          { value: "confirmed", description: "Use this if the lead confirmed they'll attend the session.", activity: "Interested — Follow Up", automation: "Schedule demo reminder", subKeys: [] },
+          { value: "not_confirmed", description: "Use this if the lead did not confirm attendance.", activity: "", automation: "", subKeys: [] },
+        ],
+      },
     ],
   },
 ];
 let agentIdCounter = 10;
+
+function isAgentUsable(agent) {
+  return agent.outputVariables.some(v => v.type === 'enum' && v.keys && v.keys.some(k => k.activity));
+}
 
 function getSelectedAgent() {
   const id = parseInt(document.getElementById('agentSelect').value, 10);
@@ -927,7 +1094,12 @@ function openPanel() {
   const count = selectedCount > 0 ? selectedCount : currentDormantCount;
   document.getElementById('panelCount').textContent = `${count} dormant leads found`;
   populateAgentSelect();
-  resetOutputMapping();
+  populateAgentVersionSelect();
+  renderAgentActionSummary();
+  populateConnectionSelect();
+  populatePhoneNumberSelect();
+  retryRules = [];
+  renderRetryRules();
   overlay.classList.add('show');
   panel.classList.add('show');
   document.querySelector('.panel-body').scrollTop = 0;
@@ -969,7 +1141,7 @@ function refreshPanelSectionObserver() {
 function populateAgentSelect() {
   const select = document.getElementById('agentSelect');
   const prevValue = select.value;
-  const eligible = agents.filter(a => a.outputVariables.length > 0);
+  const eligible = agents.filter(isAgentUsable);
 
   const emptyState = document.getElementById('agentEmptyState');
   const field = document.getElementById('agentSelectField');
@@ -983,176 +1155,171 @@ function populateAgentSelect() {
   if (eligible.some(a => String(a.id) === prevValue)) select.value = prevValue;
 }
 
-// ---------- Output mapping ("What happens next?") ----------
-let outputMapping = {};
-let outputRowIdCounter = 0;
-
-function makeDefaultRow(type) {
-  outputRowIdCounter += 1;
-  if (type === 'percentage') return { key: 'r' + outputRowIdCounter, comparator: '≥', threshold: 70, activity: '', newActivityText: '' };
-  return { key: 'r' + outputRowIdCounter, textMode: 'contains', textMatch: '', activity: '', newActivityText: '' };
-}
-
-function resetOutputMapping() {
-  outputMapping = {};
-  populateAddVariableSelect();
-  renderOutputMapping();
-}
-
-function populateAddVariableSelect() {
-  const select = document.getElementById('addVariableSelect');
-  const wrapper = document.getElementById('addVariableField');
-  const note = document.getElementById('addVariableNote');
+// ---------- Agent version ----------
+function populateAgentVersionSelect() {
   const agent = getSelectedAgent();
-  const available = agent ? agent.outputVariables.filter(v => !outputMapping[v.name]) : [];
-  if (!agent || available.length === 0) {
-    wrapper.style.display = 'none';
-    note.style.display = 'block';
-    note.textContent = agent
-      ? `All output variables for ${agent.name.split(' — ')[0]} are already mapped above.`
-      : 'Select an agent to see its output variables.';
-  } else {
-    wrapper.style.display = '';
-    note.style.display = 'none';
-    select.innerHTML = '<option value="">+ Add output variable to map…</option>'
-      + available.map(v => `<option value="${v.name}">${v.name}</option>`).join('');
-  }
-}
-
-document.getElementById('addVariableSelect').addEventListener('change', (e) => {
-  const varName = e.target.value;
-  if (!varName) return;
-  const agent = getSelectedAgent();
-  const varDef = agent.outputVariables.find(v => v.name === varName);
-  if (varDef.type === 'boolean') {
-    outputMapping[varName] = {
-      type: varDef.type, description: varDef.description, hasError: false, rows: [
-        { key: 'true', label: 'True', activity: '', newActivityText: '' },
-        { key: 'false', label: 'False', activity: '', newActivityText: '' },
-      ]
-    };
-  } else {
-    outputMapping[varName] = { type: varDef.type, description: varDef.description, hasError: false, rows: [makeDefaultRow(varDef.type)] };
-  }
-  e.target.value = '';
-  populateAddVariableSelect();
-  renderOutputMapping();
-});
-
-function renderOutputRow(varName, type, row) {
-  const activityOptions = `<option value="" ${!row.activity ? 'selected' : ''}>Select lead activity…</option>`
-    + ACTIVITY_OPTIONS.map(a => `<option ${a === row.activity ? 'selected' : ''}>${a}</option>`).join('')
-    + `<option value="__create_new__" ${row.activity === '__create_new__' ? 'selected' : ''}>+ Type to create new status</option>`;
-
-  const activitySelect = `<span class="inline-select-wrap"><select class="inline-select" data-role="activity" data-var="${varName}" data-key="${row.key}">${activityOptions}</select></span>`;
-  const newActivityInput = row.activity === '__create_new__'
-    ? `<input type="text" class="inline-input inline-input-text" data-role="newActivity" data-var="${varName}" data-key="${row.key}" placeholder="New activity name" value="${row.newActivityText}">`
-    : '';
-  const removeBtn = type !== 'boolean' ? `<button class="output-row-remove" data-remove-row="${varName}" data-key2="${row.key}">Remove</button>` : '';
-
-  let conditionHtml = '';
-  if (type === 'boolean') {
-    conditionHtml = `is <b>${row.label}</b>`;
-  } else if (type === 'percentage') {
-    const comparatorOptions = ['≥', '≤', '='].map(c => `<option ${c === row.comparator ? 'selected' : ''}>${c}</option>`).join('');
-    conditionHtml = `
-      is
-      <span class="inline-select-wrap"><select class="inline-select" data-role="comparator" data-var="${varName}" data-key="${row.key}">${comparatorOptions}</select></span>
-      <input type="number" class="inline-input inline-input-num" data-role="threshold" data-var="${varName}" data-key="${row.key}" value="${row.threshold}" placeholder="0" min="0" max="100">
-      <span class="output-suffix">out of 100</span>
-    `;
-  } else {
-    const textModeOptions = `<option value="contains" ${row.textMode === 'contains' ? 'selected' : ''}>contains</option>
-      <option value="exact" ${row.textMode === 'exact' ? 'selected' : ''}>exactly matches</option>`;
-    conditionHtml = `
-      <span class="inline-select-wrap"><select class="inline-select" data-role="textMode" data-var="${varName}" data-key="${row.key}">${textModeOptions}</select></span>
-      <input type="text" class="inline-input inline-input-text" data-role="textMatch" data-var="${varName}" data-key="${row.key}" placeholder="e.g. price" value="${row.textMatch || ''}">
-    `;
-  }
-
-  return `
-    <div class="output-row">
-      <div class="output-sentence">
-        If <span class="var-ref">${varName}</span> ${conditionHtml} → trigger ${activitySelect} ${newActivityInput} ${removeBtn}
-      </div>
-    </div>
-  `;
-}
-
-function renderOutputMapping() {
-  const container = document.getElementById('outputMapping');
-  const varNames = Object.keys(outputMapping);
-  if (varNames.length === 0) {
-    container.innerHTML = '';
+  const select = document.getElementById('agentVersionSelect');
+  if (!agent) {
+    select.innerHTML = '<option value="">Select an agent first</option>';
+    select.disabled = true;
     return;
   }
-  container.innerHTML = varNames.map(varName => {
-    const group = outputMapping[varName];
-    const rowsHtml = group.rows.map(row => renderOutputRow(varName, group.type, row)).join('');
-    const canAddRow = group.type !== 'boolean';
+  select.disabled = false;
+  select.innerHTML = agent.versions.map(v => `<option value="${v.id}">${v.label}</option>`).join('');
+}
+
+// ---------- Connection & phone number ----------
+function populateConnectionSelect() {
+  const select = document.getElementById('connectionSelect');
+  select.innerHTML = '<option value="">Select a connection</option>'
+    + CONNECTIONS.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+function populatePhoneNumberSelect() {
+  const conn = CONNECTIONS.find(c => c.id === document.getElementById('connectionSelect').value);
+  const phoneSelect = document.getElementById('phoneNumberSelect');
+  if (!conn) {
+    phoneSelect.innerHTML = '<option value="">Select a connection first</option>';
+    phoneSelect.disabled = true;
+    return;
+  }
+  phoneSelect.disabled = false;
+  phoneSelect.innerHTML = conn.numbers.map(n => `<option value="${n}">${n}</option>`).join('');
+}
+document.getElementById('connectionSelect').addEventListener('change', populatePhoneNumberSelect);
+
+// ---------- What happens next? (read-only agent action summary) ----------
+function renderAgentActionSummary() {
+  const container = document.getElementById('agentActionSummary');
+  const agent = getSelectedAgent();
+  if (!agent) {
+    container.innerHTML = '<div class="static-note">Select an agent to see what it will do.</div>';
+    return;
+  }
+  if (agent.outputVariables.length === 0) {
+    container.innerHTML = '<div class="static-note">This agent has no output variables configured.</div>';
+    return;
+  }
+
+  let hasUnmapped = false;
+  const html = agent.outputVariables.map(v => {
+    if (v.type === 'enum') {
+      const keyLines = (v.keys || []).map(k => {
+        const activityLabel = k.activity ? (k.activity === '__create_new__' ? (k.newActivityText || 'New status') : k.activity) : null;
+        if (!activityLabel) hasUnmapped = true;
+        const automationPart = k.automation ? ` <span class="summary-arrow">+ triggers</span> ${k.automation}` : '';
+        return `
+          <div class="summary-key-line">
+            <span class="summary-key-value">${k.value || '(unnamed key)'}</span>
+            <span class="summary-arrow">→</span>
+            ${activityLabel ? `<span>${activityLabel}</span>` : `<span class="summary-activity-missing">No activity set</span>`}
+            ${automationPart}
+          </div>
+        `;
+      }).join('');
+      return `
+        <div class="output-var-group">
+          <div class="output-var-head"><div class="output-var-name">${v.name} <span class="output-var-type">(enum)</span></div></div>
+          ${v.description ? `<div class="output-var-desc">${v.description}</div>` : ''}
+          ${keyLines}
+        </div>
+      `;
+    }
     return `
       <div class="output-var-group">
-        <div class="output-var-head">
-          <div class="output-var-name">${varName} <span class="output-var-type">(${group.type})</span></div>
-          <button class="remove-link" data-remove-block="${varName}">Remove variable</button>
-        </div>
-        ${group.description ? `<div class="output-var-desc">${group.description}</div>` : ''}
-        <div class="output-rows">${rowsHtml}</div>
-        ${canAddRow ? `<button class="btn output-add-row" data-add-row="${varName}">+ Add row</button>` : ''}
-        <div class="output-note">Any case not mapped above will result in no activity change for that lead.</div>
-        ${group.hasError ? `<div class="output-warning show">At least one case must be mapped to a lead activity before this can be launched.</div>` : ''}
+        <div class="output-var-head"><div class="output-var-name">${v.name} <span class="output-var-type">(${v.type})</span></div></div>
+        ${v.description ? `<div class="output-var-desc">${v.description}</div>` : ''}
+        <div class="static-note">Captured for reference — doesn't trigger any activity or automation.</div>
       </div>
     `;
   }).join('');
+
+  const warning = hasUnmapped
+    ? `<div class="output-warning show">Some keys aren't mapped to a lead activity yet. <button class="remove-link" id="configureAgentLink" style="color:var(--text);">Configure in Managed Agents →</button></div>`
+    : '';
+  container.innerHTML = html + warning;
+
+  const link = document.getElementById('configureAgentLink');
+  if (link) {
+    link.addEventListener('click', () => {
+      closePanel();
+      transitionToPage('agents', () => openAgentDetail(agent.id));
+    });
+  }
 }
 
-function validateOutputMapping() {
-  let valid = true;
-  Object.values(outputMapping).forEach(group => {
-    group.hasError = !group.rows.some(r => r.activity);
-    if (group.hasError) valid = false;
-  });
-  renderOutputMapping();
-  return valid;
+document.getElementById('agentSelect').addEventListener('change', () => {
+  populateAgentVersionSelect();
+  renderAgentActionSummary();
+});
+
+// ---------- Retries (Scheduling) ----------
+const FAILURE_CATEGORIES = [
+  { value: 'system_error', label: 'System error' },
+  { value: 'did_not_pick', label: 'Did not pick' },
+  { value: 'call_shorter', label: 'Call shorter than [X] seconds' },
+  { value: 'busy', label: 'Line busy' },
+  { value: 'invalid_number', label: 'Invalid number' },
+];
+let retryRules = [];
+let retryRuleIdCounter = 0;
+
+function renderRetryRules() {
+  const container = document.getElementById('retryRulesContainer');
+  container.innerHTML = retryRules.map(r => `
+    <div class="retry-row" data-retry-id="${r.id}">
+      <div class="field">
+        <label>Failure category</label>
+        <select data-role="category" data-retry-id="${r.id}">
+          ${FAILURE_CATEGORIES.map(c => `<option value="${c.value}" ${c.value === r.category ? 'selected' : ''}>${c.label}</option>`).join('')}
+        </select>
+      </div>
+      ${r.category === 'call_shorter' ? `
+        <div class="field field-small">
+          <label>Seconds</label>
+          <input type="number" min="1" data-role="threshold" data-retry-id="${r.id}" value="${r.threshold}">
+        </div>
+      ` : ''}
+      <div class="field field-small">
+        <label>Attempts</label>
+        <input type="number" min="1" data-role="attempts" data-retry-id="${r.id}" value="${r.attempts}">
+      </div>
+      <div class="field">
+        <label>Retry delay after batch completes (minutes)</label>
+        <input type="number" min="0" data-role="delay" data-retry-id="${r.id}" value="${r.delayMinutes}">
+      </div>
+      <button class="remove-link" data-remove-retry="${r.id}">Remove</button>
+    </div>
+  `).join('') || '<div class="static-note">No retry rules configured — failed calls won\'t be retried.</div>';
 }
 
-document.getElementById('outputMapping').addEventListener('change', (e) => {
-  const varName = e.target.dataset.var;
-  const key = e.target.dataset.key;
-  if (!varName || !outputMapping[varName]) return;
-  const row = outputMapping[varName].rows.find(r => r.key === key);
-  if (!row) return;
+document.getElementById('addRetryRuleBtn').addEventListener('click', () => {
+  retryRules.push({ id: ++retryRuleIdCounter, category: 'system_error', threshold: 15, attempts: 2, delayMinutes: 30 });
+  renderRetryRules();
+});
+
+document.getElementById('retryRulesContainer').addEventListener('change', (e) => {
+  const id = parseInt(e.target.dataset.retryId, 10);
+  const rule = retryRules.find(r => r.id === id);
+  if (!rule) return;
   const role = e.target.dataset.role;
-  if (role === 'activity') { row.activity = e.target.value; renderOutputMapping(); return; }
-  if (role === 'newActivity') row.newActivityText = e.target.value;
-  if (role === 'comparator') row.comparator = e.target.value;
-  if (role === 'threshold') row.threshold = e.target.value;
-  if (role === 'textMode') row.textMode = e.target.value;
-  if (role === 'textMatch') row.textMatch = e.target.value;
+  if (role === 'category') { rule.category = e.target.value; renderRetryRules(); return; }
+  if (role === 'threshold') rule.threshold = e.target.value;
+  if (role === 'attempts') rule.attempts = e.target.value;
+  if (role === 'delay') rule.delayMinutes = e.target.value;
 });
-
-document.getElementById('outputMapping').addEventListener('click', (e) => {
-  if (e.target.dataset.addRow) {
-    const group = outputMapping[e.target.dataset.addRow];
-    group.rows.push(makeDefaultRow(group.type));
-    renderOutputMapping();
-  }
-  if (e.target.dataset.removeRow) {
-    const group = outputMapping[e.target.dataset.removeRow];
-    group.rows = group.rows.filter(r => r.key !== e.target.dataset.key2);
-    renderOutputMapping();
-  }
-  if (e.target.dataset.removeBlock) {
-    delete outputMapping[e.target.dataset.removeBlock];
-    populateAddVariableSelect();
-    renderOutputMapping();
+document.getElementById('retryRulesContainer').addEventListener('click', (e) => {
+  if (e.target.dataset.removeRetry) {
+    retryRules = retryRules.filter(r => r.id !== parseInt(e.target.dataset.removeRetry, 10));
+    renderRetryRules();
   }
 });
-
-document.getElementById('agentSelect').addEventListener('change', resetOutputMapping);
 
 populateAgentSelect();
-resetOutputMapping();
+populateAgentVersionSelect();
+renderAgentActionSummary();
+populateConnectionSelect();
+populatePhoneNumberSelect();
+renderRetryRules();
 
 // ---------- Managed Agents ----------
 let editingAgent = null;
@@ -1173,7 +1340,7 @@ function renderAgentsList() {
       <td class="lead-name">${a.name}</td>
       <td>${a.inputVariables.length}</td>
       <td>${a.outputVariables.length}</td>
-      <td class="stage-tag">${a.outputVariables.length > 0 ? 'Yes' : 'No — add an output variable'}</td>
+      <td class="stage-tag">${isAgentUsable(a) ? 'Yes' : 'No — map a key to a lead activity'}</td>
     `;
     tr.addEventListener('click', () => openAgentDetail(a.id));
     tbody.appendChild(tr);
@@ -1194,6 +1361,247 @@ function showAgentsList() {
   document.getElementById('agentsListView').style.display = 'block';
 }
 
+function cloneOutputVariableForEditing(v) {
+  return {
+    id: ++varRowIdCounter,
+    name: v.name, type: v.type, description: v.description || '',
+    keys: v.type === 'enum' ? (v.keys || []).map(k => ({
+      id: ++varRowIdCounter,
+      value: k.value, description: k.description || '', activity: k.activity || '',
+      newActivityText: k.newActivityText || '', automation: k.automation || '',
+      subKeys: [...(k.subKeys || [])],
+    })) : undefined,
+  };
+}
+
+function newOutputVariable() {
+  return {
+    id: ++varRowIdCounter, name: '', type: 'enum', description: '',
+    keys: [{ id: ++varRowIdCounter, value: '', description: '', activity: '', newActivityText: '', automation: '', subKeys: [] }],
+  };
+}
+
+function cleanOutputVariable(v) {
+  const base = { name: v.name, type: v.type, description: v.description || '' };
+  if (v.type === 'enum') {
+    base.keys = (v.keys || []).filter(k => k.value.trim()).map(k => ({
+      value: k.value,
+      description: k.description || '',
+      activity: k.activity === '__create_new__' ? (k.newActivityText || '') : (k.activity || ''),
+      automation: k.automation || '',
+      subKeys: (k.subKeys || []).filter(sk => sk.trim()),
+    }));
+  }
+  return base;
+}
+
+// ---------- Shared output-variable editor (enum keys / sub-keys) ----------
+function buildKeyRowHTML(varId, k) {
+  const activityOptions = `<option value="" ${!k.activity ? 'selected' : ''}>Select lead activity…</option>`
+    + ACTIVITY_OPTIONS.map(a => `<option ${a === k.activity ? 'selected' : ''}>${a}</option>`).join('')
+    + `<option value="__create_new__" ${k.activity === '__create_new__' ? 'selected' : ''}>+ Type to create new status</option>`;
+  return `
+    <div class="key-row" data-key-id="${k.id}">
+      <div class="key-row-main">
+        <input type="text" data-role="value" data-var-id="${varId}" data-key-id="${k.id}" placeholder="Key value (e.g. requested)" value="${k.value}">
+        <button class="remove-link" data-remove-key="${k.id}" data-var-id="${varId}">Remove key</button>
+      </div>
+      <textarea class="key-desc" rows="2" data-role="description" data-var-id="${varId}" data-key-id="${k.id}" placeholder="When should the extraction layer use this key? (e.g. Use this if the lead asks to be called later)">${k.description || ''}</textarea>
+      <div class="key-row-fields">
+        <label>Lead activity to trigger</label>
+        <select data-role="activity" data-var-id="${varId}" data-key-id="${k.id}">${activityOptions}</select>
+        ${k.activity === '__create_new__' ? `<input type="text" style="margin-top:8px; width:100%;" data-role="newActivity" data-var-id="${varId}" data-key-id="${k.id}" placeholder="New activity status name" value="${k.newActivityText || ''}">` : ''}
+      </div>
+      <div class="automation-combo">
+        <label>Automation to trigger (optional)</label>
+        <input type="text" class="automation-input" data-role="automationSearch" data-var-id="${varId}" data-key-id="${k.id}" placeholder="Search automations… leave blank for none" value="${k.automation || ''}" autocomplete="off">
+        <div class="automation-options" data-var-id="${varId}" data-key-id="${k.id}" style="display:none;"></div>
+      </div>
+      <div class="subkeys-editor">
+        <div class="static-note">Sub-keys are for analytics only — they don't trigger any activity or automation.</div>
+        ${(k.subKeys || []).map((sk, idx) => `
+          <div class="subkey-row">
+            <input type="text" data-role="subkey" data-var-id="${varId}" data-key-id="${k.id}" data-sub-index="${idx}" placeholder="Sub-key (e.g. already enrolled)" value="${sk}">
+            <button class="remove-link" data-remove-subkey="${idx}" data-var-id="${varId}" data-key-id="${k.id}">Remove</button>
+          </div>
+        `).join('')}
+        <button class="btn" data-add-subkey="${k.id}" data-var-id="${varId}" style="margin-top:8px;">+ Add sub-key</button>
+      </div>
+    </div>
+  `;
+}
+
+function buildKeysEditorHTML(v) {
+  return `
+    <div class="keys-editor">
+      <span class="keys-header-label">Keys</span>
+      ${(v.keys || []).map(k => buildKeyRowHTML(v.id, k)).join('') || '<div class="static-note">No keys yet.</div>'}
+      <button class="btn" data-add-key="${v.id}" style="margin-top:10px;">+ Add key</button>
+    </div>
+  `;
+}
+
+function buildOutputVariableBlock(v) {
+  const typeOptions = ['enum', 'number', 'text'].map(t => `<option value="${t}" ${t === v.type ? 'selected' : ''}>${t.charAt(0).toUpperCase() + t.slice(1)}</option>`).join('');
+  return `
+    <div class="outvar-block" data-var-id="${v.id}">
+      <div class="outvar-head">
+        <input type="text" data-role="name" data-var-id="${v.id}" placeholder="Variable name (e.g. callback_status)" value="${v.name}">
+        <select data-role="type" data-var-id="${v.id}">${typeOptions}</select>
+        <button class="remove-link" data-remove-outvar="${v.id}">Remove variable</button>
+      </div>
+      <textarea class="outvar-desc" rows="2" data-role="description" data-var-id="${v.id}" placeholder="Variable description (e.g. This captures the overall callback status)">${v.description || ''}</textarea>
+      ${v.type === 'enum' ? buildKeysEditorHTML(v) : ''}
+    </div>
+  `;
+}
+
+function buildOutputVariablesHTML(outputVariables) {
+  return outputVariables.map(buildOutputVariableBlock).join('')
+    || '<div class="static-note">No output variables yet — add one so this agent can be used in workflows.</div>';
+}
+
+function filterAutomationOptions(varId, keyId, query) {
+  const listEl = document.querySelector(`.automation-options[data-var-id="${varId}"][data-key-id="${keyId}"]`);
+  if (!listEl) return;
+  const q = (query || '').trim().toLowerCase();
+  const matches = AUTOMATIONS.filter(a => a.toLowerCase().includes(q));
+  listEl.innerHTML = `<div class="automation-option" data-value="">— No automation —</div>`
+    + matches.map(a => `<div class="automation-option" data-value="${a}">${a}</div>`).join('');
+  listEl.style.display = 'block';
+}
+function hideAutomationOptions(varId, keyId) {
+  const listEl = document.querySelector(`.automation-options[data-var-id="${varId}"][data-key-id="${keyId}"]`);
+  if (listEl) listEl.style.display = 'none';
+}
+
+function bindOutputVariablesEvents(container, getVars, rerender) {
+  function findVar(varId) { return getVars().find(v => v.id === varId); }
+  function findKey(varId, keyId) { const v = findVar(varId); return v && (v.keys || []).find(k => k.id === keyId); }
+
+  container.addEventListener('input', (e) => {
+    const role = e.target.dataset.role;
+    if (!role) return;
+    if (role === 'automationSearch') {
+      filterAutomationOptions(e.target.dataset.varId, e.target.dataset.keyId, e.target.value);
+      return;
+    }
+    const varId = parseInt(e.target.dataset.varId, 10);
+    const keyId = e.target.dataset.keyId ? parseInt(e.target.dataset.keyId, 10) : null;
+    if (role === 'subkey') {
+      const key = findKey(varId, keyId);
+      if (key) key.subKeys[parseInt(e.target.dataset.subIndex, 10)] = e.target.value;
+      return;
+    }
+    if (keyId) {
+      const key = findKey(varId, keyId);
+      if (key) key[role] = e.target.value;
+    } else {
+      const v = findVar(varId);
+      if (v) v[role] = e.target.value;
+    }
+  });
+
+  container.addEventListener('change', (e) => {
+    const role = e.target.dataset.role;
+    if (!role || role === 'automationSearch' || role === 'subkey') return;
+    const varId = parseInt(e.target.dataset.varId, 10);
+    const keyId = e.target.dataset.keyId ? parseInt(e.target.dataset.keyId, 10) : null;
+    if (role === 'type') {
+      const v = findVar(varId);
+      if (v) { v.type = e.target.value; if (v.type === 'enum' && !v.keys) v.keys = [{ id: ++varRowIdCounter, value: '', description: '', activity: '', newActivityText: '', automation: '', subKeys: [] }]; rerender(); }
+      return;
+    }
+    if (role === 'activity') {
+      const key = findKey(varId, keyId);
+      if (key) { key.activity = e.target.value; rerender(); }
+      return;
+    }
+    if (keyId) {
+      const key = findKey(varId, keyId);
+      if (key) key[role] = e.target.value;
+    } else {
+      const v = findVar(varId);
+      if (v) v[role] = e.target.value;
+    }
+  });
+
+  container.addEventListener('focusin', (e) => {
+    if (e.target.classList.contains('automation-input')) {
+      filterAutomationOptions(e.target.dataset.varId, e.target.dataset.keyId, e.target.value);
+    }
+  });
+  container.addEventListener('focusout', (e) => {
+    if (e.target.classList.contains('automation-input')) {
+      const varId = parseInt(e.target.dataset.varId, 10), keyId = parseInt(e.target.dataset.keyId, 10);
+      const targetEl = e.target;
+      setTimeout(() => {
+        hideAutomationOptions(varId, keyId);
+        const key = findKey(varId, keyId);
+        targetEl.value = (key && key.automation) || '';
+      }, 150);
+    }
+  });
+  container.addEventListener('mousedown', (e) => {
+    const opt = e.target.closest('.automation-option');
+    if (!opt) return;
+    e.preventDefault();
+    const optList = opt.closest('.automation-options');
+    const varId = parseInt(optList.dataset.varId, 10), keyId = parseInt(optList.dataset.keyId, 10);
+    const key = findKey(varId, keyId);
+    if (key) key.automation = opt.dataset.value;
+    const input = container.querySelector(`.automation-input[data-var-id="${varId}"][data-key-id="${keyId}"]`);
+    if (input) input.value = opt.dataset.value;
+    hideAutomationOptions(varId, keyId);
+  });
+
+  container.addEventListener('click', (e) => {
+    if (e.target.dataset.removeOutvar) {
+      const varId = parseInt(e.target.dataset.removeOutvar, 10);
+      const list = getVars();
+      const idx = list.findIndex(v => v.id === varId);
+      if (idx > -1) list.splice(idx, 1);
+      rerender();
+      return;
+    }
+    if (e.target.dataset.addKey) {
+      const v = findVar(parseInt(e.target.dataset.addKey, 10));
+      if (v) { v.keys.push({ id: ++varRowIdCounter, value: '', description: '', activity: '', newActivityText: '', automation: '', subKeys: [] }); rerender(); }
+      return;
+    }
+    if (e.target.dataset.removeKey) {
+      const varId = parseInt(e.target.dataset.varId, 10);
+      const keyId = parseInt(e.target.dataset.removeKey, 10);
+      const v = findVar(varId);
+      if (v) { v.keys = v.keys.filter(k => k.id !== keyId); rerender(); }
+      return;
+    }
+    if (e.target.dataset.addSubkey) {
+      const varId = parseInt(e.target.dataset.varId, 10);
+      const keyId = parseInt(e.target.dataset.addSubkey, 10);
+      const key = findKey(varId, keyId);
+      if (key) { key.subKeys.push(''); rerender(); }
+      return;
+    }
+    if (e.target.dataset.removeSubkey !== undefined) {
+      const varId = parseInt(e.target.dataset.varId, 10);
+      const keyId = parseInt(e.target.dataset.keyId, 10);
+      const idx = parseInt(e.target.dataset.removeSubkey, 10);
+      const key = findKey(varId, keyId);
+      if (key) { key.subKeys.splice(idx, 1); rerender(); }
+      return;
+    }
+  });
+}
+
+function renderOutputVariablesInto(container, getVars, rerender) {
+  container.innerHTML = buildOutputVariablesHTML(getVars());
+  if (!container.dataset.bound) {
+    bindOutputVariablesEvents(container, getVars, rerender);
+    container.dataset.bound = '1';
+  }
+}
+
 function openAgentDetail(agentId) {
   document.getElementById('agentsListView').style.display = 'none';
   document.getElementById('agentDetailView').style.display = 'block';
@@ -1207,7 +1615,7 @@ function openAgentDetail(agentId) {
       id: src.id,
       name: src.name,
       inputVariables: src.inputVariables.map(v => ({ id: ++varRowIdCounter, ...v })),
-      outputVariables: src.outputVariables.map(v => ({ id: ++varRowIdCounter, ...v })),
+      outputVariables: src.outputVariables.map(cloneOutputVariableForEditing),
     };
   }
   document.getElementById('agentNameInput').value = editingAgent.name;
@@ -1233,27 +1641,7 @@ function renderVarRows() {
     </div>
   `).join('') || '<div class="static-note">No input variables yet.</div>');
 
-  const outputContainer = document.getElementById('outputVarRows');
-  const outputHeader = editingAgent.outputVariables.length ? `
-    <div class="var-row-header">
-      <span>Output variable name</span>
-      <span>Variable type</span>
-      <span>Description</span>
-      <span class="var-row-header-spacer"></span>
-    </div>
-  ` : '';
-  outputContainer.innerHTML = outputHeader + (editingAgent.outputVariables.map(row => `
-    <div class="var-row">
-      <input type="text" data-kind="output" data-role="name" data-id="${row.id}" placeholder="Output variable name (e.g. RCB_requested)" value="${row.name}">
-      <select data-kind="output" data-role="type" data-id="${row.id}">
-        <option value="boolean" ${row.type === 'boolean' ? 'selected' : ''}>Boolean</option>
-        <option value="percentage" ${row.type === 'percentage' ? 'selected' : ''}>Percentage</option>
-        <option value="text" ${row.type === 'text' ? 'selected' : ''}>Text</option>
-      </select>
-      <input type="text" data-kind="output" data-role="description" data-id="${row.id}" placeholder="Short description (optional)" value="${row.description || ''}">
-      <button class="remove-link" data-remove-var="output" data-id="${row.id}">Remove</button>
-    </div>
-  `).join('') || '<div class="static-note">No output variables yet — add one so this agent can be used in workflows.</div>');
+  renderOutputVariablesInto(document.getElementById('outputVarRows'), () => editingAgent.outputVariables, renderVarRows);
 }
 
 document.getElementById('createAgentBtn').addEventListener('click', () => startAgentWizard());
@@ -1266,7 +1654,7 @@ document.getElementById('addInputVarBtn').addEventListener('click', () => {
   renderVarRows();
 });
 document.getElementById('addOutputVarBtn').addEventListener('click', () => {
-  editingAgent.outputVariables.push({ id: ++varRowIdCounter, name: '', type: 'boolean', description: '' });
+  editingAgent.outputVariables.push(newOutputVariable());
   renderVarRows();
 });
 
@@ -1281,18 +1669,15 @@ function handleVarRowChange(e) {
   row[role] = e.target.value;
 }
 document.getElementById('inputVarRows').addEventListener('change', handleVarRowChange);
-document.getElementById('outputVarRows').addEventListener('change', handleVarRowChange);
 
 function handleVarRowRemove(e) {
   const kind = e.target.dataset.removeVar;
   if (!kind) return;
   const id = parseInt(e.target.dataset.id, 10);
-  if (kind === 'input') editingAgent.inputVariables = editingAgent.inputVariables.filter(r => r.id !== id);
-  else editingAgent.outputVariables = editingAgent.outputVariables.filter(r => r.id !== id);
+  editingAgent.inputVariables = editingAgent.inputVariables.filter(r => r.id !== id);
   renderVarRows();
 }
 document.getElementById('inputVarRows').addEventListener('click', handleVarRowRemove);
-document.getElementById('outputVarRows').addEventListener('click', handleVarRowRemove);
 
 document.getElementById('saveAgentBtn').addEventListener('click', () => {
   const name = document.getElementById('agentNameInput').value.trim();
@@ -1305,7 +1690,7 @@ document.getElementById('saveAgentBtn').addEventListener('click', () => {
   errorEl.style.display = 'none';
 
   const cleanInputs = editingAgent.inputVariables.filter(v => v.name.trim()).map(({ name, mapsTo }) => ({ name, mapsTo }));
-  const cleanOutputs = editingAgent.outputVariables.filter(v => v.name.trim()).map(({ name, type, description }) => ({ name, type, description }));
+  const cleanOutputs = editingAgent.outputVariables.filter(v => v.name.trim()).map(cleanOutputVariable);
 
   if (editingAgent.id == null) {
     agentIdCounter += 1;
@@ -1335,12 +1720,16 @@ function createDefaultInputVariables() {
 
 function createDefaultOutputVariables() {
   return [
-    { id: ++varRowIdCounter, name: 'RCB_requested', type: 'boolean', description: 'Whether the lead asked for a callback' },
-    { id: ++varRowIdCounter, name: 'call_connected', type: 'boolean', description: 'Whether the call connected successfully' },
-    { id: ++varRowIdCounter, name: 'interest_score', type: 'percentage', description: 'Predicted interest level, 0–100' },
-    { id: ++varRowIdCounter, name: 'sentiment_score', type: 'percentage', description: 'Overall sentiment of the conversation, 0–100' },
+    {
+      id: ++varRowIdCounter, name: 'call_outcome', type: 'enum', description: 'Overall outcome of the call',
+      keys: [
+        { id: ++varRowIdCounter, value: 'positive', description: 'Use this if the lead showed interest or agreed to next steps.', activity: 'Interested — Follow Up', newActivityText: '', automation: '', subKeys: [] },
+        { id: ++varRowIdCounter, value: 'negative', description: 'Use this if the lead declined or asked not to be contacted again.', activity: '', newActivityText: '', automation: '', subKeys: [] },
+        { id: ++varRowIdCounter, value: 'no_pickup', description: 'Use this if the call was not answered.', activity: '', newActivityText: '', automation: '', subKeys: [] },
+      ],
+    },
+    { id: ++varRowIdCounter, name: 'sentiment_score', type: 'number', description: 'Overall sentiment of the conversation, 0–100' },
     { id: ++varRowIdCounter, name: 'objection_reason', type: 'text', description: 'What the lead said if they declined' },
-    { id: ++varRowIdCounter, name: 'next_action', type: 'text', description: 'Recommended next step suggested by the AI' },
   ];
 }
 
@@ -1411,39 +1800,7 @@ function renderWizardInputRows() {
 }
 
 function renderWizardOutputRows() {
-  const container = document.getElementById('wizOutputVarRows');
-  const header = wizardAgent.outputVariables.length ? `
-    <div class="var-row-header">
-      <span>Output variable name</span>
-      <span>Variable type</span>
-      <span>Description</span>
-      <span class="var-row-header-spacer"></span>
-    </div>
-  ` : '';
-  container.innerHTML = header + (wizardAgent.outputVariables.map(row => `
-    <div class="var-row">
-      <input type="text" data-role="name" data-id="${row.id}" placeholder="Output variable name (e.g. RCB_requested)" value="${row.name}">
-      <select data-role="type" data-id="${row.id}">
-        <option value="boolean" ${row.type === 'boolean' ? 'selected' : ''}>Boolean</option>
-        <option value="percentage" ${row.type === 'percentage' ? 'selected' : ''}>Percentage</option>
-        <option value="text" ${row.type === 'text' ? 'selected' : ''}>Text</option>
-      </select>
-      <input type="text" data-role="description" data-id="${row.id}" placeholder="Short description (optional)" value="${row.description || ''}">
-      <button class="remove-link" data-remove="${row.id}">Remove</button>
-    </div>
-  `).join('') || '<div class="static-note">No output variables yet.</div>');
-  container.querySelectorAll('input, select').forEach(el => {
-    el.addEventListener('change', () => {
-      const row = wizardAgent.outputVariables.find(r => r.id === parseInt(el.dataset.id, 10));
-      if (row) row[el.dataset.role] = el.value;
-    });
-  });
-  container.querySelectorAll('.remove-link').forEach(btn => {
-    btn.addEventListener('click', () => {
-      wizardAgent.outputVariables = wizardAgent.outputVariables.filter(r => r.id !== parseInt(btn.dataset.remove, 10));
-      renderWizardOutputRows();
-    });
-  });
+  renderOutputVariablesInto(document.getElementById('wizOutputVarRows'), () => wizardAgent.outputVariables, renderWizardOutputRows);
 }
 
 function renderWizardStep() {
@@ -1538,7 +1895,7 @@ function renderWizardStep() {
     `;
     renderWizardOutputRows();
     document.getElementById('wizAddOutputVar').addEventListener('click', () => {
-      wizardAgent.outputVariables.push({ id: ++varRowIdCounter, name: '', type: 'boolean', description: '' });
+      wizardAgent.outputVariables.push(newOutputVariable());
       renderWizardOutputRows();
     });
     document.getElementById('wizBack').addEventListener('click', () => { wizardStep = 3; renderWizardStep(); });
@@ -1585,8 +1942,9 @@ function finishWizard() {
   const newAgent = {
     id: agentIdCounter,
     name: wizardAgent.name.trim(),
+    versions: DEFAULT_VERSIONS,
     inputVariables: wizardAgent.inputVariables.filter(v => v.name.trim()).map(({ name, mapsTo }) => ({ name, mapsTo })),
-    outputVariables: cleanOutputs.map(({ name, type, description }) => ({ name, type, description })),
+    outputVariables: cleanOutputs.map(cleanOutputVariable),
   };
   agents.push(newAgent);
   renderAgentsList();
@@ -1616,7 +1974,8 @@ function showWizardCompletion(newAgent) {
         updateAiCallingState();
         openPanel();
         document.getElementById('agentSelect').value = newAgent.id;
-        resetOutputMapping();
+        populateAgentVersionSelect();
+        renderAgentActionSummary();
       });
     } else {
       showAgentsList();
@@ -1653,7 +2012,6 @@ updateEstimate();
 
 // ---------- Launch workflow ----------
 document.getElementById('launchBtn').addEventListener('click', () => {
-  if (!validateOutputMapping()) return;
   const size = parseInt(batchSizeInput.value, 10) || currentDormantCount;
   const total = currentDormantCount || size;
   const outcome1 = Math.round(total * 0.22);
