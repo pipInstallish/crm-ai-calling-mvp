@@ -278,34 +278,57 @@
   .output-warning.show{ display:block; }
   .output-add-row{ margin-top: 8px; }
 
-  /* ---------- Managed Agents ---------- */
-  .var-row{ display:flex; align-items:center; gap:10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-  .var-row input, .var-row select{ flex:1; min-width:0; width:auto; }
-  .var-row-header{ display:flex; align-items:center; gap:10px; padding: 0 0 8px; }
-  .var-row-header span{ flex:1; min-width:0; font-size:11px; color: var(--text-faint); font-weight:500; }
-  .var-row-header .var-row-header-spacer{ flex:0 0 auto; width:50px; }
+  /* ---------- Managed Agents: tabular variable editor ---------- */
+  .var-table{ width:100%; border-collapse:collapse; border:1px solid var(--line-strong); }
+  .var-table thead th{
+    text-align:left; font-size:11px; text-transform:none; color: var(--text-faint); font-weight:500;
+    padding:9px 12px; background: var(--bg-alt); border-bottom:1px solid var(--line-strong);
+  }
+  .var-table tbody td{ padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; font-size:13.5px; }
+  .var-table tbody tr:last-child > td{ border-bottom:none; }
+  .var-table tbody tr:nth-child(even){ background: var(--bg-alt); }
+  .var-table input, .var-table select, .var-table textarea{
+    width:100%; min-width:0; border:none; border-bottom:1px solid var(--line-strong);
+    background:transparent; padding:4px 2px; font-size:13.5px;
+  }
+  .var-table-remove{ width:1%; white-space:nowrap; }
 
-  /* ---------- Output variable editor: enum keys / sub-keys ---------- */
-  .outvar-block{ padding: 20px 0; border-top: 1px solid var(--line); }
-  .outvar-block:first-child{ border-top:none; padding-top:0; }
-  .outvar-head{ display:flex; align-items:center; gap:10px; }
-  .outvar-head input[type="text"]{ flex:2; min-width:0; }
-  .outvar-head select{ flex:1; min-width:0; }
-  .outvar-desc{ width:100%; margin-top:8px; }
+  /* Output variable: contained block per variable */
+  .outvar-block{
+    margin-top:20px; padding:18px; border:1px solid var(--line-strong); border-radius:6px; background: var(--bg-alt);
+  }
+  .outvar-block:first-child{ margin-top:0; }
+  .outvar-block-header{ margin-bottom:16px; }
+  .outvar-title-row{ display:flex; align-items:center; gap:10px; }
+  .outvar-name{
+    flex:2; min-width:0; font-size:14px; font-weight:600; border:none;
+    border-bottom:1px solid var(--line-strong); background:transparent; padding:4px 2px;
+  }
+  .outvar-title-row select{ flex:0 0 120px; }
+  .completeness-badge{ font-size:11.5px; color: var(--text-faint); white-space:nowrap; }
+  .completeness-badge.is-warning{ color: var(--danger); }
+  .outvar-desc{
+    width:100%; margin-top:10px; font-family:inherit; font-size:13px; color: var(--text-dim);
+    border:none; border-bottom:1px solid var(--line-strong); background:transparent; padding:6px 2px; resize:vertical;
+  }
 
-  .keys-editor{ margin-top:16px; padding-left:18px; border-left: 1px solid var(--line); }
-  .keys-header-label{ font-size:11px; color: var(--text-faint); font-weight:500; display:block; margin-bottom:10px; }
-  .key-row{ padding: 14px 0; border-top: 1px solid var(--line); }
-  .key-row:first-child{ border-top:none; padding-top:0; }
-  .key-row-main{ display:flex; align-items:center; gap:10px; }
-  .key-row-main input{ flex:1; min-width:0; }
-  .key-desc{ width:100%; margin-top:8px; font-family:inherit; font-size:13px; resize:vertical; }
-  .key-row-fields{ margin-top:10px; }
-  .key-row-fields label{ font-size:11.5px; color: var(--text-faint); display:block; margin-bottom:6px; }
-  .key-row-fields select{ width:100%; }
+  /* Keys table */
+  .keys-table td.key-cell{ min-width:180px; }
+  .key-value-input{ font-weight:600; margin-bottom:4px; }
+  .key-desc-input{ font-size:12px; color: var(--text-dim); min-height:36px; resize:vertical; }
+  .compact-select, .compact-input{ font-size:13px; padding:3px 2px; }
+  .cell-warning{ font-size:11px; color: var(--danger); margin-top:4px; }
+  .subkeys-toggle{
+    background:none; border:none; font-size:12.5px; color: var(--text-dim); cursor:pointer;
+    font-family:inherit; padding:0; white-space:nowrap;
+  }
+  .subkeys-toggle:hover{ color: var(--text); }
+  .subkeys-row > td{ background: var(--bg) !important; }
+  .subkeys-panel{ padding:6px 0 4px; }
+  .subkey-row{ display:flex; align-items:center; gap:10px; padding: 6px 0; }
+  .subkey-row input{ flex:1; min-width:0; }
 
-  .automation-combo{ position:relative; margin-top:12px; }
-  .automation-combo label{ font-size:11.5px; color: var(--text-faint); display:block; margin-bottom:6px; }
+  .automation-combo{ position:relative; }
   .automation-input{ width:100%; }
   .automation-options{
     position:absolute; left:0; right:0; top:100%; margin-top:2px;
@@ -315,10 +338,6 @@
   }
   .automation-option{ padding:8px 10px; font-size:13px; cursor:pointer; }
   .automation-option:hover{ background: var(--bg-alt); }
-
-  .subkeys-editor{ margin-top:14px; padding-left:18px; border-left: 1px dashed var(--line-strong); }
-  .subkey-row{ display:flex; align-items:center; gap:10px; padding: 6px 0; }
-  .subkey-row input{ flex:1; min-width:0; }
 
   /* ---------- Retries (AI Calling — Scheduling) ---------- */
   .retry-row{ display:flex; align-items:flex-end; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); flex-wrap:wrap; }
@@ -993,7 +1012,7 @@ let agents = [
 let agentIdCounter = 10;
 
 function isAgentUsable(agent) {
-  return agent.outputVariables.some(v => v.type === 'enum' && v.keys && v.keys.some(k => k.activity));
+  return agent.outputVariables.some(v => v.type === 'enum' ? (v.keys && v.keys.some(k => k.activity)) : !!v.activity);
 }
 
 function getSelectedAgent() {
@@ -1261,11 +1280,17 @@ function renderAgentActionSummary() {
         </div>
       `;
     }
+    const activityLabel = v.activity ? (v.activity === '__create_new__' ? (v.newActivityText || 'New status') : v.activity) : null;
+    if (!activityLabel) hasUnmapped = true;
+    const automationPart = v.automation ? ` <span class="summary-arrow">+ triggers</span> ${v.automation}` : '';
     return `
       <div class="output-var-group">
         <div class="output-var-head"><div class="output-var-name">${v.name} <span class="output-var-type">(${v.type})</span></div></div>
         ${v.description ? `<div class="output-var-desc">${v.description}</div>` : ''}
-        <div class="static-note">Captured for reference — doesn't trigger any activity or automation.</div>
+        <div class="summary-key-line">
+          ${activityLabel ? `<span>${activityLabel}</span>` : `<span class="summary-activity-missing">No activity set</span>`}
+          ${automationPart}
+        </div>
       </div>
     `;
   }).join('');
@@ -1410,15 +1435,22 @@ function cancelWizard() {
   showAgentsList();
 }
 
+function newKeyRow() {
+  return { id: ++varRowIdCounter, value: '', description: '', activity: '', newActivityText: '', automation: '', subKeys: [], subKeysExpanded: false };
+}
+
 function cloneOutputVariableForEditing(v) {
   return {
     id: ++varRowIdCounter,
     name: v.name, type: v.type, description: v.description || '',
+    activity: v.type !== 'enum' ? (v.activity || '') : '',
+    newActivityText: '',
+    automation: v.type !== 'enum' ? (v.automation || '') : '',
     keys: v.type === 'enum' ? (v.keys || []).map(k => ({
       id: ++varRowIdCounter,
       value: k.value, description: k.description || '', activity: k.activity || '',
-      newActivityText: k.newActivityText || '', automation: k.automation || '',
-      subKeys: [...(k.subKeys || [])],
+      newActivityText: '', automation: k.automation || '',
+      subKeys: [...(k.subKeys || [])], subKeysExpanded: false,
     })) : undefined,
   };
 }
@@ -1426,7 +1458,8 @@ function cloneOutputVariableForEditing(v) {
 function newOutputVariable() {
   return {
     id: ++varRowIdCounter, name: '', type: 'enum', description: '',
-    keys: [{ id: ++varRowIdCounter, value: '', description: '', activity: '', newActivityText: '', automation: '', subKeys: [] }],
+    activity: '', newActivityText: '', automation: '',
+    keys: [newKeyRow()],
   };
 }
 
@@ -1440,67 +1473,124 @@ function cleanOutputVariable(v) {
       automation: k.automation || '',
       subKeys: (k.subKeys || []).filter(sk => sk.trim()),
     }));
+  } else {
+    base.activity = v.activity === '__create_new__' ? (v.newActivityText || '') : (v.activity || '');
+    base.automation = v.automation || '';
   }
   return base;
 }
 
-// ---------- Shared output-variable editor (enum keys / sub-keys) ----------
-function buildKeyRowHTML(varId, k) {
-  const activityOptions = `<option value="" ${!k.activity ? 'selected' : ''}>Select lead activity…</option>`
-    + ACTIVITY_OPTIONS.map(a => `<option ${a === k.activity ? 'selected' : ''}>${a}</option>`).join('')
-    + `<option value="__create_new__" ${k.activity === '__create_new__' ? 'selected' : ''}>+ Type to create new status</option>`;
+// ---------- Shared output-variable editor: tabular (enum keys / sub-keys) ----------
+function buildActivityOptionsHTML(current) {
+  return `<option value="" ${!current ? 'selected' : ''}>Not set</option>`
+    + ACTIVITY_OPTIONS.map(a => `<option ${a === current ? 'selected' : ''}>${a}</option>`).join('')
+    + `<option value="__create_new__" ${current === '__create_new__' ? 'selected' : ''}>+ Create new status</option>`;
+}
+
+function buildActivityCellHTML(varId, keyId, target) {
+  const keyIdAttr = keyId == null ? '' : keyId;
   return `
-    <div class="key-row" data-key-id="${k.id}">
-      <div class="key-row-main">
-        <input type="text" data-role="value" data-var-id="${varId}" data-key-id="${k.id}" placeholder="Key value (e.g. requested)" value="${k.value}">
-        <button class="remove-link" data-remove-key="${k.id}" data-var-id="${varId}">Remove key</button>
-      </div>
-      <textarea class="key-desc" rows="2" data-role="description" data-var-id="${varId}" data-key-id="${k.id}" placeholder="When should the extraction layer use this key? (e.g. Use this if the lead asks to be called later)">${k.description || ''}</textarea>
-      <div class="key-row-fields">
-        <label>Lead activity to trigger</label>
-        <select data-role="activity" data-var-id="${varId}" data-key-id="${k.id}">${activityOptions}</select>
-        ${k.activity === '__create_new__' ? `<input type="text" style="margin-top:8px; width:100%;" data-role="newActivity" data-var-id="${varId}" data-key-id="${k.id}" placeholder="New activity status name" value="${k.newActivityText || ''}">` : ''}
-      </div>
-      <div class="automation-combo">
-        <label>Automation to trigger (optional)</label>
-        <input type="text" class="automation-input" data-role="automationSearch" data-var-id="${varId}" data-key-id="${k.id}" placeholder="Search automations… leave blank for none" value="${k.automation || ''}" autocomplete="off">
-        <div class="automation-options" data-var-id="${varId}" data-key-id="${k.id}" style="display:none;"></div>
-      </div>
-      <div class="subkeys-editor">
-        <div class="static-note">Sub-keys are for analytics only — they don't trigger any activity or automation.</div>
-        ${(k.subKeys || []).map((sk, idx) => `
-          <div class="subkey-row">
-            <input type="text" data-role="subkey" data-var-id="${varId}" data-key-id="${k.id}" data-sub-index="${idx}" placeholder="Sub-key (e.g. already enrolled)" value="${sk}">
-            <button class="remove-link" data-remove-subkey="${idx}" data-var-id="${varId}" data-key-id="${k.id}">Remove</button>
-          </div>
-        `).join('')}
-        <button class="btn" data-add-subkey="${k.id}" data-var-id="${varId}" style="margin-top:8px;">+ Add sub-key</button>
-      </div>
+    <select class="compact-select" data-role="activity" data-var-id="${varId}" data-key-id="${keyIdAttr}">${buildActivityOptionsHTML(target.activity)}</select>
+    ${target.activity === '__create_new__' ? `<input type="text" class="compact-input" data-role="newActivityText" data-var-id="${varId}" data-key-id="${keyIdAttr}" placeholder="New status name" value="${target.newActivityText || ''}">` : ''}
+    ${!target.activity ? '<div class="cell-warning">Not set</div>' : ''}
+  `;
+}
+
+function buildAutomationCellHTML(varId, keyId, target) {
+  const keyIdAttr = keyId == null ? '' : keyId;
+  return `
+    <div class="automation-combo">
+      <input type="text" class="automation-input compact-input" data-role="automationSearch" data-var-id="${varId}" data-key-id="${keyIdAttr}" placeholder="—" value="${target.automation || ''}" autocomplete="off">
+      <div class="automation-options" data-var-id="${varId}" data-key-id="${keyIdAttr}" style="display:none;"></div>
     </div>
   `;
 }
 
-function buildKeysEditorHTML(v) {
+function buildKeyRowHTML(varId, k) {
+  const subCount = (k.subKeys || []).length;
+  const expanded = !!k.subKeysExpanded;
+  let html = `
+    <tr class="key-row" data-key-id="${k.id}">
+      <td class="key-cell">
+        <input type="text" class="key-value-input" data-role="value" data-var-id="${varId}" data-key-id="${k.id}" placeholder="Key value (e.g. requested)" value="${k.value}">
+        <textarea class="key-desc-input" rows="2" data-role="description" data-var-id="${varId}" data-key-id="${k.id}" placeholder="When should this key be used? (e.g. Use this if the lead asks to be called later)">${k.description || ''}</textarea>
+      </td>
+      <td>${buildActivityCellHTML(varId, k.id, k)}</td>
+      <td>${buildAutomationCellHTML(varId, k.id, k)}</td>
+      <td>
+        <button class="subkeys-toggle" data-toggle-subkeys="${k.id}" data-var-id="${varId}">${subCount ? `${subCount} reason${subCount === 1 ? '' : 's'}` : 'Add reasons'} ${expanded ? '▾' : '▸'}</button>
+      </td>
+      <td class="var-table-remove"><button class="remove-link" data-remove-key="${k.id}" data-var-id="${varId}">Remove</button></td>
+    </tr>
+  `;
+  if (expanded) {
+    html += `
+      <tr class="subkeys-row" data-key-id="${k.id}">
+        <td colspan="5">
+          <div class="subkeys-panel">
+            ${(k.subKeys || []).map((sk, idx) => `
+              <div class="subkey-row">
+                <input type="text" data-role="subkey" data-var-id="${varId}" data-key-id="${k.id}" data-sub-index="${idx}" placeholder="Sub-key (e.g. already enrolled)" value="${sk}">
+                <button class="remove-link" data-remove-subkey="${idx}" data-var-id="${varId}" data-key-id="${k.id}">Remove</button>
+              </div>
+            `).join('')}
+            <button class="btn" data-add-subkey="${k.id}" data-var-id="${varId}" style="margin-top:6px;">+ Add sub-key</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+  return html;
+}
+
+function buildKeysTableHTML(v) {
+  const rows = (v.keys || []).map(k => buildKeyRowHTML(v.id, k)).join('')
+    || '<tr><td colspan="5" class="static-note">No keys yet.</td></tr>';
   return `
-    <div class="keys-editor">
-      <span class="keys-header-label">Keys</span>
-      ${(v.keys || []).map(k => buildKeyRowHTML(v.id, k)).join('') || '<div class="static-note">No keys yet.</div>'}
-      <button class="btn" data-add-key="${v.id}" style="margin-top:10px;">+ Add key</button>
-    </div>
+    <table class="var-table keys-table">
+      <thead><tr><th>Key</th><th>Lead activity</th><th>Automation</th><th>Sub-keys</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <button class="btn" data-add-key="${v.id}" style="margin-top:12px;">+ Add key</button>
+  `;
+}
+
+function buildSingleMappingTableHTML(v) {
+  return `
+    <table class="var-table">
+      <thead><tr><th>Lead activity</th><th>Automation</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>${buildActivityCellHTML(v.id, null, v)}</td>
+          <td>${buildAutomationCellHTML(v.id, null, v)}</td>
+        </tr>
+      </tbody>
+    </table>
   `;
 }
 
 function buildOutputVariableBlock(v) {
   const typeOptions = ['enum', 'number', 'text'].map(t => `<option value="${t}" ${t === v.type ? 'selected' : ''}>${t.charAt(0).toUpperCase() + t.slice(1)}</option>`).join('');
+  let completeness = '';
+  if (v.type === 'enum') {
+    const total = (v.keys || []).length;
+    const mapped = (v.keys || []).filter(k => k.activity).length;
+    const complete = total > 0 && mapped === total;
+    completeness = `<span class="completeness-badge ${complete ? '' : 'is-warning'}">${mapped} of ${total} key${total === 1 ? '' : 's'} mapped</span>`;
+  }
   return `
     <div class="outvar-block" data-var-id="${v.id}">
-      <div class="outvar-head">
-        <input type="text" data-role="name" data-var-id="${v.id}" placeholder="Variable name (e.g. callback_status)" value="${v.name}">
-        <select data-role="type" data-var-id="${v.id}">${typeOptions}</select>
-        <button class="remove-link" data-remove-outvar="${v.id}">Remove variable</button>
+      <div class="outvar-block-header">
+        <div class="outvar-title-row">
+          <input type="text" class="outvar-name" data-role="name" data-var-id="${v.id}" placeholder="Variable name (e.g. callback_status)" value="${v.name}">
+          <select data-role="type" data-var-id="${v.id}">${typeOptions}</select>
+          ${completeness}
+          <button class="remove-link" data-remove-outvar="${v.id}">Remove variable</button>
+        </div>
+        <textarea class="outvar-desc" rows="2" data-role="description" data-var-id="${v.id}" placeholder="Variable description (e.g. This captures the overall callback status)">${v.description || ''}</textarea>
+        ${v.type === 'enum' ? '<div class="output-note">Sub-keys are for analytics only — they don\'t trigger any activity or automation.</div>' : ''}
       </div>
-      <textarea class="outvar-desc" rows="2" data-role="description" data-var-id="${v.id}" placeholder="Variable description (e.g. This captures the overall callback status)">${v.description || ''}</textarea>
-      ${v.type === 'enum' ? buildKeysEditorHTML(v) : ''}
+      ${v.type === 'enum' ? buildKeysTableHTML(v) : buildSingleMappingTableHTML(v)}
     </div>
   `;
 }
@@ -1527,6 +1617,7 @@ function hideAutomationOptions(varId, keyId) {
 function bindOutputVariablesEvents(container, getVars, rerender) {
   function findVar(varId) { return getVars().find(v => v.id === varId); }
   function findKey(varId, keyId) { const v = findVar(varId); return v && (v.keys || []).find(k => k.id === keyId); }
+  function findTarget(varId, keyId) { return keyId ? findKey(varId, keyId) : findVar(varId); }
 
   container.addEventListener('input', (e) => {
     const role = e.target.dataset.role;
@@ -1542,13 +1633,8 @@ function bindOutputVariablesEvents(container, getVars, rerender) {
       if (key) key.subKeys[parseInt(e.target.dataset.subIndex, 10)] = e.target.value;
       return;
     }
-    if (keyId) {
-      const key = findKey(varId, keyId);
-      if (key) key[role] = e.target.value;
-    } else {
-      const v = findVar(varId);
-      if (v) v[role] = e.target.value;
-    }
+    const target = findTarget(varId, keyId);
+    if (target) target[role] = e.target.value;
   });
 
   container.addEventListener('change', (e) => {
@@ -1558,21 +1644,16 @@ function bindOutputVariablesEvents(container, getVars, rerender) {
     const keyId = e.target.dataset.keyId ? parseInt(e.target.dataset.keyId, 10) : null;
     if (role === 'type') {
       const v = findVar(varId);
-      if (v) { v.type = e.target.value; if (v.type === 'enum' && !v.keys) v.keys = [{ id: ++varRowIdCounter, value: '', description: '', activity: '', newActivityText: '', automation: '', subKeys: [] }]; rerender(); }
+      if (v) { v.type = e.target.value; if (v.type === 'enum' && (!v.keys || v.keys.length === 0)) v.keys = [newKeyRow()]; rerender(); }
       return;
     }
     if (role === 'activity') {
-      const key = findKey(varId, keyId);
-      if (key) { key.activity = e.target.value; rerender(); }
+      const target = findTarget(varId, keyId);
+      if (target) { target.activity = e.target.value; rerender(); }
       return;
     }
-    if (keyId) {
-      const key = findKey(varId, keyId);
-      if (key) key[role] = e.target.value;
-    } else {
-      const v = findVar(varId);
-      if (v) v[role] = e.target.value;
-    }
+    const target = findTarget(varId, keyId);
+    if (target) target[role] = e.target.value;
   });
 
   container.addEventListener('focusin', (e) => {
@@ -1582,12 +1663,14 @@ function bindOutputVariablesEvents(container, getVars, rerender) {
   });
   container.addEventListener('focusout', (e) => {
     if (e.target.classList.contains('automation-input')) {
-      const varId = parseInt(e.target.dataset.varId, 10), keyId = parseInt(e.target.dataset.keyId, 10);
+      const varIdStr = e.target.dataset.varId, keyIdStr = e.target.dataset.keyId;
+      const varId = parseInt(varIdStr, 10);
+      const keyId = keyIdStr ? parseInt(keyIdStr, 10) : null;
       const targetEl = e.target;
       setTimeout(() => {
-        hideAutomationOptions(varId, keyId);
-        const key = findKey(varId, keyId);
-        targetEl.value = (key && key.automation) || '';
+        hideAutomationOptions(varIdStr, keyIdStr);
+        const target = findTarget(varId, keyId);
+        targetEl.value = (target && target.automation) || '';
       }, 150);
     }
   });
@@ -1596,12 +1679,14 @@ function bindOutputVariablesEvents(container, getVars, rerender) {
     if (!opt) return;
     e.preventDefault();
     const optList = opt.closest('.automation-options');
-    const varId = parseInt(optList.dataset.varId, 10), keyId = parseInt(optList.dataset.keyId, 10);
-    const key = findKey(varId, keyId);
-    if (key) key.automation = opt.dataset.value;
-    const input = container.querySelector(`.automation-input[data-var-id="${varId}"][data-key-id="${keyId}"]`);
+    const varIdStr = optList.dataset.varId, keyIdStr = optList.dataset.keyId;
+    const varId = parseInt(varIdStr, 10);
+    const keyId = keyIdStr ? parseInt(keyIdStr, 10) : null;
+    const target = findTarget(varId, keyId);
+    if (target) target.automation = opt.dataset.value;
+    const input = container.querySelector(`.automation-input[data-var-id="${varIdStr}"][data-key-id="${keyIdStr}"]`);
     if (input) input.value = opt.dataset.value;
-    hideAutomationOptions(varId, keyId);
+    hideAutomationOptions(varIdStr, keyIdStr);
   });
 
   container.addEventListener('click', (e) => {
@@ -1615,7 +1700,7 @@ function bindOutputVariablesEvents(container, getVars, rerender) {
     }
     if (e.target.dataset.addKey) {
       const v = findVar(parseInt(e.target.dataset.addKey, 10));
-      if (v) { v.keys.push({ id: ++varRowIdCounter, value: '', description: '', activity: '', newActivityText: '', automation: '', subKeys: [] }); rerender(); }
+      if (v) { v.keys.push(newKeyRow()); rerender(); }
       return;
     }
     if (e.target.dataset.removeKey) {
@@ -1623,6 +1708,13 @@ function bindOutputVariablesEvents(container, getVars, rerender) {
       const keyId = parseInt(e.target.dataset.removeKey, 10);
       const v = findVar(varId);
       if (v) { v.keys = v.keys.filter(k => k.id !== keyId); rerender(); }
+      return;
+    }
+    if (e.target.dataset.toggleSubkeys) {
+      const varId = parseInt(e.target.dataset.varId, 10);
+      const keyId = parseInt(e.target.dataset.toggleSubkeys, 10);
+      const key = findKey(varId, keyId);
+      if (key) { key.subKeysExpanded = !key.subKeysExpanded; rerender(); }
       return;
     }
     if (e.target.dataset.addSubkey) {
@@ -1673,22 +1765,28 @@ function openAgentDetail(agentId) {
 
 function renderVarRows() {
   const inputContainer = document.getElementById('inputVarRows');
-  const inputHeader = editingAgent.inputVariables.length ? `
-    <div class="var-row-header">
-      <span>Input variable name</span>
-      <span>Lead attribute to map against</span>
-      <span class="var-row-header-spacer"></span>
-    </div>
-  ` : '';
-  inputContainer.innerHTML = inputHeader + (editingAgent.inputVariables.map(row => `
-    <div class="var-row">
-      <input type="text" data-kind="input" data-role="name" data-id="${row.id}" placeholder="Input variable name (e.g. lead_name)" value="${row.name}">
-      <select data-kind="input" data-role="mapsTo" data-id="${row.id}">
-        ${LEAD_FIELDS.map(f => `<option ${f === row.mapsTo ? 'selected' : ''}>${f}</option>`).join('')}
-      </select>
-      <button class="remove-link" data-remove-var="input" data-id="${row.id}">Remove</button>
-    </div>
-  `).join('') || '<div class="static-note">No input variables yet.</div>');
+  if (editingAgent.inputVariables.length) {
+    inputContainer.innerHTML = `
+      <table class="var-table">
+        <thead><tr><th>Input variable name</th><th>Lead attribute to map against</th><th></th></tr></thead>
+        <tbody>
+          ${editingAgent.inputVariables.map(row => `
+            <tr>
+              <td><input type="text" data-kind="input" data-role="name" data-id="${row.id}" placeholder="e.g. lead_name" value="${row.name}"></td>
+              <td>
+                <select data-kind="input" data-role="mapsTo" data-id="${row.id}">
+                  ${LEAD_FIELDS.map(f => `<option ${f === row.mapsTo ? 'selected' : ''}>${f}</option>`).join('')}
+                </select>
+              </td>
+              <td class="var-table-remove"><button class="remove-link" data-remove-var="input" data-id="${row.id}">Remove</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } else {
+    inputContainer.innerHTML = '<div class="static-note">No input variables yet.</div>';
+  }
 
   renderOutputVariablesInto(document.getElementById('outputVarRows'), () => editingAgent.outputVariables, renderVarRows);
 }
@@ -1819,22 +1917,28 @@ function renderWizardProgress() {
 
 function renderWizardInputRows() {
   const container = document.getElementById('wizInputVarRows');
-  const header = wizardAgent.inputVariables.length ? `
-    <div class="var-row-header">
-      <span>Input variable name</span>
-      <span>Lead attribute to map against</span>
-      <span class="var-row-header-spacer"></span>
-    </div>
-  ` : '';
-  container.innerHTML = header + (wizardAgent.inputVariables.map(row => `
-    <div class="var-row">
-      <input type="text" data-role="name" data-id="${row.id}" placeholder="Input variable name (e.g. lead_name)" value="${row.name}">
-      <select data-role="mapsTo" data-id="${row.id}">
-        ${LEAD_FIELDS.map(f => `<option ${f === row.mapsTo ? 'selected' : ''}>${f}</option>`).join('')}
-      </select>
-      <button class="remove-link" data-remove="${row.id}">Remove</button>
-    </div>
-  `).join('') || '<div class="static-note">No input variables yet.</div>');
+  if (wizardAgent.inputVariables.length) {
+    container.innerHTML = `
+      <table class="var-table">
+        <thead><tr><th>Input variable name</th><th>Lead attribute to map against</th><th></th></tr></thead>
+        <tbody>
+          ${wizardAgent.inputVariables.map(row => `
+            <tr>
+              <td><input type="text" data-role="name" data-id="${row.id}" placeholder="e.g. lead_name" value="${row.name}"></td>
+              <td>
+                <select data-role="mapsTo" data-id="${row.id}">
+                  ${LEAD_FIELDS.map(f => `<option ${f === row.mapsTo ? 'selected' : ''}>${f}</option>`).join('')}
+                </select>
+              </td>
+              <td class="var-table-remove"><button class="remove-link" data-remove="${row.id}">Remove</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } else {
+    container.innerHTML = '<div class="static-note">No input variables yet.</div>';
+  }
   container.querySelectorAll('input, select').forEach(el => {
     el.addEventListener('change', () => {
       const row = wizardAgent.inputVariables.find(r => r.id === parseInt(el.dataset.id, 10));
