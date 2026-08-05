@@ -556,9 +556,11 @@
           <thead>
             <tr>
               <th>Agent Name</th>
-              <th>Input Variables</th>
-              <th>Output Variables</th>
-              <th>Usable in Workflows</th>
+              <th>Agent ID</th>
+              <th>Languages</th>
+              <th>Purpose</th>
+              <th>Status</th>
+              <th>Sarvam Config</th>
             </tr>
           </thead>
           <tbody id="agentsTbody"></tbody>
@@ -594,6 +596,7 @@
 
       <!-- ============ GUIDED CREATE-AGENT WIZARD ============ -->
       <div id="agentWizardView" style="display:none; max-width:480px;">
+        <button class="detail-back" id="wizardCancelBtn">← Back to Managed Agents</button>
         <div class="wizard-progress" id="wizardProgress"></div>
         <div id="wizardStepBody"></div>
       </div>
@@ -770,6 +773,9 @@ let agents = [
     id: 1,
     name: "Aria — Reactivation Specialist",
     versions: DEFAULT_VERSIONS,
+    languages: ["English", "Hindi"],
+    purposeTag: "Dormant lead reactivation calling",
+    sarvamConfigUrl: "https://www.sarvam.ai",
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
@@ -791,6 +797,9 @@ let agents = [
     id: 2,
     name: "Kabir — Renewal & Retention",
     versions: DEFAULT_VERSIONS,
+    languages: ["English", "Hindi"],
+    purposeTag: "Plan renewal follow-up",
+    sarvamConfigUrl: "https://www.sarvam.ai",
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
@@ -812,6 +821,9 @@ let agents = [
     id: 3,
     name: "Noor — Warm Callback Agent",
     versions: DEFAULT_VERSIONS,
+    languages: ["English"],
+    purposeTag: "Warm callback handling",
+    sarvamConfigUrl: "https://www.sarvam.ai",
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
@@ -822,6 +834,9 @@ let agents = [
     id: 4,
     name: "Dormant Warmup",
     versions: DEFAULT_VERSIONS,
+    languages: ["English", "Hinglish"],
+    purposeTag: "Re-engaging dormant leads",
+    sarvamConfigUrl: "https://www.sarvam.ai",
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
@@ -842,6 +857,9 @@ let agents = [
     id: 5,
     name: "Fresh Low-Intent Qualifier",
     versions: DEFAULT_VERSIONS,
+    languages: ["English"],
+    purposeTag: "Qualifying fresh low-intent leads",
+    sarvamConfigUrl: "https://www.sarvam.ai",
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
@@ -862,6 +880,9 @@ let agents = [
     id: 6,
     name: "TRO Reminder-1",
     versions: DEFAULT_VERSIONS,
+    languages: ["English", "Hindi"],
+    purposeTag: "Trial reminder outreach — first reminder",
+    sarvamConfigUrl: "https://www.sarvam.ai",
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
@@ -881,6 +902,9 @@ let agents = [
     id: 7,
     name: "TRO Reminder-2",
     versions: DEFAULT_VERSIONS,
+    languages: ["English", "Hindi", "Hinglish"],
+    purposeTag: "Trial reminder outreach — second reminder",
+    sarvamConfigUrl: "https://www.sarvam.ai",
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
@@ -901,6 +925,9 @@ let agents = [
     id: 8,
     name: "Missed Callback Recovery",
     versions: DEFAULT_VERSIONS,
+    languages: ["English"],
+    purposeTag: "Recovering missed callback requests",
+    sarvamConfigUrl: "https://www.sarvam.ai",
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
@@ -921,6 +948,9 @@ let agents = [
     id: 9,
     name: "Payment Follow-up",
     versions: DEFAULT_VERSIONS,
+    languages: ["English", "Hindi"],
+    purposeTag: "Pending payment follow-up",
+    sarvamConfigUrl: "https://www.sarvam.ai",
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
@@ -941,6 +971,9 @@ let agents = [
     id: 10,
     name: "Session Reminder",
     versions: DEFAULT_VERSIONS,
+    languages: ["English"],
+    purposeTag: "Upcoming session reminders",
+    sarvamConfigUrl: "https://www.sarvam.ai",
     inputVariables: [
       { name: "lead_memory", mapsTo: "Lead Memory" },
       { name: "lead_name", mapsTo: "Lead Name" },
@@ -1028,7 +1061,11 @@ function transitionToPage(pageId, afterSwap) {
 
 // ---------- Nav ----------
 document.querySelectorAll('.nav-item').forEach(btn => {
-  btn.addEventListener('click', () => transitionToPage(btn.dataset.page));
+  btn.addEventListener('click', () => {
+    transitionToPage(btn.dataset.page, () => {
+      if (btn.dataset.page === 'agents') showAgentsList();
+    });
+  });
 });
 
 // ---------- Render leads table ----------
@@ -1338,11 +1375,16 @@ function renderAgentsList() {
     tr.className = 'run-row';
     tr.innerHTML = `
       <td class="lead-name">${a.name}</td>
-      <td>${a.inputVariables.length}</td>
-      <td>${a.outputVariables.length}</td>
-      <td class="stage-tag">${isAgentUsable(a) ? 'Yes' : 'No — map a key to a lead activity'}</td>
+      <td>AGT-${String(a.id).padStart(3, '0')}</td>
+      <td>${(a.languages || []).join(', ') || '—'}</td>
+      <td>${a.purposeTag || '—'}</td>
+      <td class="stage-tag">${isAgentUsable(a) ? 'Active' : 'Draft — map a key to a lead activity'}</td>
+      <td><a href="${a.sarvamConfigUrl || 'https://www.sarvam.ai'}" target="_blank" rel="noopener">View config ↗</a></td>
     `;
-    tr.addEventListener('click', () => openAgentDetail(a.id));
+    tr.addEventListener('click', (e) => {
+      if (e.target.closest('a')) return;
+      openAgentDetail(a.id);
+    });
     tbody.appendChild(tr);
   });
   const isEmpty = agents.length === 0;
@@ -1358,7 +1400,14 @@ document.getElementById('resetAgentsDemoBtn').addEventListener('click', () => {
 
 function showAgentsList() {
   document.getElementById('agentDetailView').style.display = 'none';
+  document.getElementById('agentWizardView').style.display = 'none';
+  document.getElementById('agentBreadcrumb').style.display = 'none';
   document.getElementById('agentsListView').style.display = 'block';
+}
+
+function cancelWizard() {
+  wizardReturnContext = null;
+  showAgentsList();
 }
 
 function cloneOutputVariableForEditing(v) {
@@ -1647,6 +1696,7 @@ function renderVarRows() {
 document.getElementById('createAgentBtn').addEventListener('click', () => startAgentWizard());
 document.getElementById('createAgentBtnEmpty').addEventListener('click', () => startAgentWizard());
 document.getElementById('agentDetailBack').addEventListener('click', showAgentsList);
+document.getElementById('wizardCancelBtn').addEventListener('click', cancelWizard);
 document.getElementById('agentNameInput').addEventListener('input', (e) => { editingAgent.name = e.target.value; });
 
 document.getElementById('addInputVarBtn').addEventListener('click', () => {
@@ -1943,6 +1993,9 @@ function finishWizard() {
     id: agentIdCounter,
     name: wizardAgent.name.trim(),
     versions: DEFAULT_VERSIONS,
+    languages: [...wizardAgent.languages],
+    purposeTag: wizardAgent.purposeTag.trim(),
+    sarvamConfigUrl: "https://www.sarvam.ai",
     inputVariables: wizardAgent.inputVariables.filter(v => v.name.trim()).map(({ name, mapsTo }) => ({ name, mapsTo })),
     outputVariables: cleanOutputs.map(cleanOutputVariable),
   };
